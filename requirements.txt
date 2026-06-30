@@ -1,0 +1,17 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.0
+
+# Prompt 2 dependencies
+PyJWT[crypto]>=2.10.0
+httpx>=0.28.0
+
+# Prompt 3 dependencies
+rq>=1.16.0
+redis>=5.2.0
+
+# Prompt 4 dependencies
+anthropic>=0.45.0
+openai>=1.55.0
+tenacity>=9.0.0
