@@ -62,3 +62,18 @@ Set your GitHub App's webhook URL to the forwarding URL.
 2. Within ~30-60 seconds, confirm a GitHub PR review appears from your App
 3. Open a clean PR and confirm "no issues found" summary
 4. Verify workspace folder is cleaned up after job completion
+
+---
+
+## 📖 Documentation
+
+For comprehensive codebase intelligence and architecture documentation, see the [`docs/`](docs/) folder:
+
+| File | Description |
+|------|-------------|
+| [`memory.md`](memory.md) | Complete project brain — purpose, tech stack, features, data flow |
+| [`docs/architecture.md`](docs/architecture.md) | System architecture diagram + layered breakdown |
+| [`docs/routes.md`](docs/routes.md) | Full route table |
+| [`docs/api-map.md`](docs/api-map.md) | Complete API inventory with endpoints, inputs, outputs |
+| [`docs/database-map.md`](docs/database-map.md) | Database schema, entities, fields, relationships |
+| [`docs/dependency-graph.md`](docs/dependency-graph.md) | Module dependency map + critical files |
