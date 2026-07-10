@@ -21,3 +21,6 @@ workspace/
 # OS
 .DS_Store
 Thumbs.db
+
+# AI config
+.gemini/
