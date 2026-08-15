@@ -26,6 +26,31 @@
 
 ---
 
+## 📋 Table of Contents
+
+- [✨ Features](#-features)
+- [🚀 Quick Start](#-quick-start)
+- [📋 Environment Variables](#-environment-variables)
+- [🏗️ Architecture](#️-architecture)
+- [🔍 What It Detects](#-what-it-detects)
+- [📁 Project Structure](#-project-structure)
+- [🛠️ Available Commands](#️-available-commands)
+- [🧪 Testing](#-testing)
+- [🔧 LLM Gateway](#-llm-gateway)
+- [🐳 Docker Deployment](#-docker-deployment)
+- [🛡️ Security Features](#️-security-features)
+- [🗺️ Roadmap](#️-roadmap)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🙏 Acknowledgements](#-acknowledgements)
+- [📬 Support](#-support)
+
+---
+
+> 📸 **Screenshot placeholder:** Add a GIF of a PR review arriving with inline security comments.
+
+---
+
 ## ✨ Features
 
 | Feature | Description |
