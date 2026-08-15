@@ -172,9 +172,7 @@ def run_security_agent(pr_files: list[dict]) -> list[dict]:
         )
 
         try:
-            response_text = call_llm(
-                _SYSTEM_PROMPT, user_prompt, response_format="json"
-            )
+            response_text = call_llm(_SYSTEM_PROMPT, user_prompt, response_format="json")
             result = _extract_json(response_text)
             batch_findings = result.get("findings", [])
 

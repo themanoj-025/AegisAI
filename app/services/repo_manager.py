@@ -29,9 +29,7 @@ def _build_authenticated_clone_url(clone_url: str, installation_token: str) -> s
     Transforms: https://github.com/owner/repo.git
     Into:       https://x-access-token:{token}@github.com/owner/repo.git
     """
-    return clone_url.replace(
-        "https://", f"https://x-access-token:{installation_token}@", 1
-    )
+    return clone_url.replace("https://", f"https://x-access-token:{installation_token}@", 1)
 
 
 def clone_pr_repo(
@@ -54,11 +52,7 @@ def clone_pr_repo(
 
     # Build local workspace path
     workspace_base = Path(settings.workspace_dir)
-    clone_path = (
-        workspace_base
-        / f"{repo_owner}_{repo_name}"
-        / f"pr_{pr_number}_{_random_suffix()}"
-    )
+    clone_path = workspace_base / f"{repo_owner}_{repo_name}" / f"pr_{pr_number}_{_random_suffix()}"
     clone_path = clone_path.resolve()
 
     # Ensure parent directory exists
@@ -119,9 +113,7 @@ def clone_pr_repo(
         return str(clone_path)
 
     except subprocess.TimeoutExpired:
-        raise RuntimeError(
-            f"Git clone timed out for {repo_full_name} (PR #{pr_number})"
-        )
+        raise RuntimeError(f"Git clone timed out for {repo_full_name} (PR #{pr_number})")
     except Exception:
         # Clean up on failure
         if clone_path.exists():

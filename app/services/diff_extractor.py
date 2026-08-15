@@ -136,9 +136,7 @@ def get_pr_diff(repo_path: str, base_sha: str, head_sha: str) -> list[dict]:
         raise RuntimeError(f"git diff timed out for {repo_path}")
 
     if result.returncode != 0:
-        raise RuntimeError(
-            f"git diff failed (exit {result.returncode}): {result.stderr.strip()}"
-        )
+        raise RuntimeError(f"git diff failed (exit {result.returncode}): {result.stderr.strip()}")
 
     diff_text = result.stdout
     files = _parse_diff_output(diff_text)
