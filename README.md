@@ -397,3 +397,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <p align="center">
   If you find this project useful, please give it a ⭐ star!
 </p>
+---
+
+## ⭐ Star History
+
+[![Last Commit](https://img.shields.io/github/last-commit/themanoj-025/AegisAI?style=flat-square)](https://github.com/themanoj-025/AegisAI)
+[![Contributors](https://img.shields.io/github/contributors/themanoj-025/AegisAI?style=flat-square)](https://github.com/themanoj-025/AegisAI/graphs/contributors)
+
+[![Star History Chart](https://api.star-history.com/svg?repos=themanoj-025/AegisAI&type=Date)](https://star-history.com/#AegisAI&Date)
