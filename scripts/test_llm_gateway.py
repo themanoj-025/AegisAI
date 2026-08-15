@@ -43,9 +43,7 @@ def main():
         # Try to parse as JSON
         parsed = json.loads(response)
         if parsed.get("status") == "ok":
-            print(
-                "\n✓ LLM gateway test PASSED — API keys and provider are working correctly."
-            )
+            print("\n✓ LLM gateway test PASSED — API keys and provider are working correctly.")
         else:
             print(f"\n⚠ Response parsed but unexpected content: {parsed}")
 

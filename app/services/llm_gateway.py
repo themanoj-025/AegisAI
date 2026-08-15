@@ -30,9 +30,7 @@ class _LLMProvider(ABC):
     """Abstract base for LLM providers."""
 
     @abstractmethod
-    def call(
-        self, system_prompt: str, user_prompt: str, response_format: str = "json"
-    ) -> str: ...
+    def call(self, system_prompt: str, user_prompt: str, response_format: str = "json") -> str: ...
 
 
 class _AnthropicProvider(_LLMProvider):
@@ -44,9 +42,7 @@ class _AnthropicProvider(_LLMProvider):
         self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
         self._model = settings.claude_model
 
-    def call(
-        self, system_prompt: str, user_prompt: str, response_format: str = "json"
-    ) -> str:
+    def call(self, system_prompt: str, user_prompt: str, response_format: str = "json") -> str:
         import anthropic
 
         extra_kwargs: dict[str, Any] = {}
@@ -100,9 +96,7 @@ class _OpenAIProvider(_LLMProvider):
         self._client = openai.OpenAI(api_key=settings.openai_api_key)
         self._model = settings.openai_model
 
-    def call(
-        self, system_prompt: str, user_prompt: str, response_format: str = "json"
-    ) -> str:
+    def call(self, system_prompt: str, user_prompt: str, response_format: str = "json") -> str:
         import openai
 
         kwargs: dict[str, Any] = {
@@ -171,9 +165,7 @@ def _get_provider() -> _LLMProvider:
     retry=retry_if_exception(_is_retryable),
     reraise=True,
 )
-def call_llm(
-    system_prompt: str, user_prompt: str, response_format: str = "json"
-) -> str:
+def call_llm(system_prompt: str, user_prompt: str, response_format: str = "json") -> str:
     """Call the configured LLM provider and return the response text.
 
     Args:

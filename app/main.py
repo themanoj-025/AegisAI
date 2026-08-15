@@ -20,9 +20,7 @@ from app.workers.review_worker import run_review_job
 logger = logging.getLogger("aegisai")
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter("%(asctime)s | %(name)s | %(levelname)s | %(message)s")
-)
+handler.setFormatter(logging.Formatter("%(asctime)s | %(name)s | %(levelname)s | %(message)s"))
 logger.addHandler(handler)
 
 app = FastAPI(title="AegisAI", version="0.1.0")
@@ -48,9 +46,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Permissions-Policy"] = (
         "camera=(), microphone=(), geolocation=(), interest-cohort=()"
     )
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'none'; frame-ancestors 'none';"
-    )
+    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none';"
     # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"  # enable when HTTPS
     return response
 

@@ -43,9 +43,7 @@ class TestAcquireReviewLock:
         mock_get_redis.return_value = mock_redis
 
         acquire_review_lock("org/repo", "abc123", ttl=120)
-        mock_redis.expire.assert_called_once_with(
-            "review_lock:org/repo:abc123", 120
-        )
+        mock_redis.expire.assert_called_once_with("review_lock:org/repo:abc123", 120)
 
     @patch("app.services.queue.get_redis")
     def test_default_ttl_is_600(self, mock_get_redis):
@@ -54,6 +52,4 @@ class TestAcquireReviewLock:
         mock_get_redis.return_value = mock_redis
 
         acquire_review_lock("org/repo", "abc123")
-        mock_redis.expire.assert_called_once_with(
-            "review_lock:org/repo:abc123", 600
-        )
+        mock_redis.expire.assert_called_once_with("review_lock:org/repo:abc123", 600)

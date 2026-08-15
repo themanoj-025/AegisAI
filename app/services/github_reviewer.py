@@ -119,9 +119,7 @@ def _build_review_body(
     }
 
 
-def _map_hint_to_line(
-    line_hint: str, filename: str, diff_files: list[dict]
-) -> int | None:
+def _map_hint_to_line(line_hint: str, filename: str, diff_files: list[dict]) -> int | None:
     """Try to map a line_hint to a line number within the diff.
 
     Searches for the line_hint text in the file's diff hunk and returns

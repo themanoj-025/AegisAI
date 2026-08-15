@@ -3,11 +3,7 @@
 import subprocess
 from unittest.mock import MagicMock, patch
 
-from app.services.diff_extractor import (
-    _is_noise_file,
-    _parse_diff_output,
-    get_pr_diff,
-)
+from app.services.diff_extractor import _is_noise_file, _parse_diff_output, get_pr_diff
 
 # ── _is_noise_file ────────────────────────────────────────────────────
 
@@ -157,9 +153,7 @@ class TestGetPrDiff:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout=(
-                "diff --git a/src/app.py b/src/app.py\n"
-                "+++ b/src/app.py\n"
-                "+print('hello')\n"
+                "diff --git a/src/app.py b/src/app.py\n" "+++ b/src/app.py\n" "+print('hello')\n"
             ),
             stderr="",
         )

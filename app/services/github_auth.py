@@ -67,9 +67,7 @@ def get_installation_token(installation_id: int) -> str:
     if installation_id in _token_cache:
         cached_token, expiry = _token_cache[installation_id]
         if time.time() < (expiry - _EXPIRY_BUFFER_SECONDS):
-            logger.debug(
-                "Using cached installation token for installation %d", installation_id
-            )
+            logger.debug("Using cached installation token for installation %d", installation_id)
             return cached_token
         logger.debug(
             "Cached token for installation %d expired, fetching new one",

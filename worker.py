@@ -19,9 +19,7 @@ from app.config import settings
 logger = logging.getLogger("aegisai")
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(
-    logging.Formatter("%(asctime)s | worker | %(levelname)s | %(message)s")
-)
+handler.setFormatter(logging.Formatter("%(asctime)s | worker | %(levelname)s | %(message)s"))
 logger.addHandler(handler)
 
 
