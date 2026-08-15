@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════════════════════
+# AegisAI — Development override
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Adds: hot reload (uvicorn --reload), source bind mounts, debug ports,
+#       Redis exposed on the host for redis-cli inspection.
+# NEVER use this in production.
+# ═══════════════════════════════════════════════════════════════════════
+
+services:
+  redis:
+    ports:
+      - "6379:6379"   # host access for redis-cli / debugging only
+
+  api:
+    build:
+      target: dev
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./app:/app/app
+      - ./worker.py:/app/worker.py
+      - ./tests:/app/tests
+      - workspace:/app/workspace
+
+  worker:
+    build:
+      target: dev
+    command: python worker.py
+    volumes:
+      - ./app:/app/app
+      - ./worker.py:/app/worker.py
+      - ./tests:/app/tests
+      - workspace:/app/workspace

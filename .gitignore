@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+*.egg
+.venv/
+venv/
+
+# Environment
+.env
+*.pem
+
+# Workspace - cloned repos
+workspace/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AI config
+.gemini/
+.cursorrules
+
+# Docker secrets (private keys — never commit)
+secrets/

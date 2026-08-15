@@ -1,0 +1,102 @@
+# ═══════════════════════════════════════════════════════════════════════
+# AegisAI — Docker Compose (base/shared definition)
+#
+# Stack: FastAPI webhook receiver (api) + RQ background worker (worker)
+#        + Redis (job queue / dedup locks)
+#
+# Usage:
+#   docker compose up -d              # full dev stack
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ═══════════════════════════════════════════════════════════════════════
+
+name: aegisai
+
+services:
+  # ── Redis: job queue + review dedup locks ───────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # No host port mapping by default — only internal service traffic.
+    # Expose with the dev override if you need redis-cli on the host.
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aegisai-net
+
+  # ── API: FastAPI webhook receiver ───────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # All values default to safe dev values; production secrets come
+      # from the caller's environment (see .env.example). No secrets are
+      # baked into this file.
+      REDIS_URL: "redis://redis:6379/0"
+      WORKSPACE_DIR: "/app/workspace"
+      GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
+      GITHUB_PRIVATE_KEY_PATH: "${GITHUB_PRIVATE_KEY_PATH:-/run/secrets/github-app-private-key.pem}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET:-}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-anthropic}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      CLAUDE_MODEL: "${CLAUDE_MODEL:-claude-sonnet-4-20250514}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-4o}"
+    volumes:
+      - workspace:/app/workspace
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    networks:
+      - aegisai-net
+
+  # ── Worker: RQ background review processor ──────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    restart: unless-stopped
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      WORKSPACE_DIR: "/app/workspace"
+      GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
+      GITHUB_PRIVATE_KEY_PATH: "${GITHUB_PRIVATE_KEY_PATH:-/run/secrets/github-app-private-key.pem}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET:-}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-anthropic}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      CLAUDE_MODEL: "${CLAUDE_MODEL:-claude-sonnet-4-20250514}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-4o}"
+    volumes:
+      - workspace:/app/workspace
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Worker has no healthcheck: it's a queue consumer, not a service
+    # exposing an endpoint. Compose depends_on only applies to api.
+    networks:
+      - aegisai-net
+
+volumes:
+  redisdata:      # Redis persistence — SAFE TO DELETE (cache/locks)
+  workspace:      # Cloned repos for review — SAFE TO DELETE (ephemeral)
+
+networks:
+  aegisai-net:
+    driver: bridge
