@@ -44,7 +44,15 @@ FROM base AS deps
 
 COPY requirements.txt ./
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    # Upgrade build-time/transitive packages with known HIGH CVEs flagged by
+    # the CI trivy gate (jaraco.context CVE-2026-23949, wheel CVE-2026-24049,
+    # setuptools CVE-2025-47273, msgpack GHSA-6v7p-g79w-8964).
+    pip install --no-cache-dir --upgrade \
+        "jaraco-context>=6.1.0" \
+        "wheel>=0.46.2" \
+        "setuptools>=78.1.1" \
+        "msgpack>=1.2.1"
 
 # ── API stage: FastAPI webhook receiver ───────────────────────────────
 FROM deps AS api
