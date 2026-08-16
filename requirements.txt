@@ -4,7 +4,7 @@ pydantic-settings>=2.6.0
 python-dotenv>=1.0.0
 
 # Prompt 2 dependencies
-PyJWT[crypto]>=2.10.0
+PyJWT[crypto]>=2.13.0
 httpx>=0.28.0
 
 # Prompt 3 dependencies
