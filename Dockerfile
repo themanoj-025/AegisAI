@@ -35,6 +35,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         curl \
         tini \
+    # Remove Debian's unpatched python copies: python:3.11-slim ships
+    # msgpack 1.1.2 (GHSA-6v7p-g79w-8964, HIGH), setuptools 70.3.0
+    # (CVE-2025-47273), wheel 0.45.1 (CVE-2026-24049) and jaraco.context
+    # 5.3.0 (CVE-2026-23949) in /usr/lib/python3/dist-packages. The pip
+    # install in the deps stage installs patched versions in /usr/local,
+    # but Trivy scans every copy — so the unpatched apt copies must be
+    # removed or the image scan fails.
+    && apt-get purge -y --auto-remove python3-msgpack python3-setuptools python3-wheel || true \
+    && rm -rf /usr/lib/python3/dist-packages/msgpack* \
+              /usr/lib/python3/dist-packages/setuptools* \
+              /usr/lib/python3/dist-packages/pkg_resources* \
+              /usr/lib/python3/dist-packages/wheel* \
+              /usr/lib/python3/dist-packages/jaraco* \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -44,7 +57,15 @@ FROM base AS deps
 
 COPY requirements.txt ./
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    # Upgrade build-time/transitive packages with known HIGH CVEs flagged by
+    # the CI trivy gate (jaraco.context CVE-2026-23949, wheel CVE-2026-24049,
+    # setuptools CVE-2025-47273, msgpack GHSA-6v7p-g79w-8964).
+    pip install --no-cache-dir --upgrade \
+        "jaraco-context>=6.1.0" \
+        "wheel>=0.46.2" \
+        "setuptools>=78.1.1" \
+        "msgpack>=1.2.1"
 
 # ── API stage: FastAPI webhook receiver ───────────────────────────────
 FROM deps AS api
