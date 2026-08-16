@@ -158,4 +158,4 @@ jobs:
           # CVE-2026-23949) even though the app's runtime packages in
           # site-packages are patched. The app never imports pip's vendored
           # copies, so exclude that directory from the scan.
-          args: --skip-dirs /usr/local/lib/python3.11/site-packages/pip/_vendor
+          skip-dirs: /usr/local/lib/python3.11/site-packages/pip/_vendor
