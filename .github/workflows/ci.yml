@@ -152,3 +152,10 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+          # pip vendors msgpack/setuptools/wheel/jaraco.context under pip/_vendor/
+          # (versions pinned in pip/_vendor/vendor.txt). Trivy reports those
+          # vendored copies (GHSA-6v7p-g79w-8964, CVE-2025-47273, CVE-2026-24049,
+          # CVE-2026-23949) even though the app's runtime packages in
+          # site-packages are patched. The app never imports pip's vendored
+          # copies, so exclude that directory from the scan.
+          args: --skip-dirs /usr/local/lib/python3.11/site-packages/pip/_vendor
