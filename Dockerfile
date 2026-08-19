@@ -31,7 +31,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 #   - git  : the worker clones PR repositories (app/services/repo_manager.py)
 #   - curl : used by the healthcheck
 #   - tini : proper PID-1 signal handling / zombie reaping
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
         git \
         curl \
         tini \
