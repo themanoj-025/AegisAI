@@ -394,6 +394,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## 📬 Support
+
+- 🐛 [Report Bug](https://github.com/themanoj-025/AegisAI/issues)
+- 💡 [Request Feature](https://github.com/themanoj-025/AegisAI/issues)
+- 📧 [Email](mailto:your-email@example.com)
+
+
 <p align="center">
   Made with ❤️ by <a href="https://github.com/themanoj-025">themanoj-025</a>
 </p>
