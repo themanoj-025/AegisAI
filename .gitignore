@@ -27,5 +27,8 @@ Thumbs.db
 .gemini/
 .cursorrules
 
+# Node.js
+node_modules/
+
 # Docker secrets (private keys — never commit)
 secrets/
