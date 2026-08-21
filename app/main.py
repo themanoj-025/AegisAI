@@ -9,7 +9,7 @@ import hmac
 import json
 import logging
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -24,6 +24,7 @@ handler.setFormatter(logging.Formatter("%(asctime)s | %(name)s | %(levelname)s |
 logger.addHandler(handler)
 
 app = FastAPI(title="AegisAI", version="0.1.0")
+v1_router = APIRouter(prefix="/api/v1")
 
 # ── CORS ─────────────────────────────────────────────────────────────
 app.add_middleware(
@@ -72,7 +73,7 @@ def verify_github_signature(payload: bytes, signature_header: str | None) -> boo
     return hmac.compare_digest(received_sig, expected_sig)
 
 
-@app.get("/health")
+@v1_router.get("/health")
 async def health_check():
     """Simple health check endpoint for deployment probes."""
     return {"status": "ok"}
@@ -177,3 +178,12 @@ async def github_webhook(request: Request):
         return {"status": "error", "detail": "queue_failed"}
 
     return {"status": "received"}
+
+
+app.include_router(v1_router)
+
+
+@app.get("/health")
+async def root_health_check():
+    """Root health check for Docker probes (backward compat)."""
+    return {"status": "ok"}

@@ -48,7 +48,7 @@ class TestVerifyGithubSignature:
 
 class TestHealthEndpoint:
     def test_health_returns_ok(self):
-        response = client.get("/health")
+        response = client.get("/api/v1/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
@@ -165,7 +165,7 @@ class TestGithubWebhook:
         mock_q.enqueue.assert_called_once()
 
     def test_security_headers_present(self):
-        response = client.get("/health")
+        response = client.get("/api/v1/health")
         assert response.headers.get("X-Content-Type-Options") == "nosniff"
         assert response.headers.get("X-Frame-Options") == "DENY"
         assert "Referrer-Policy" in response.headers
