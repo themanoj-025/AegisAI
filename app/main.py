@@ -7,21 +7,17 @@ and queues review jobs for processing.
 import hashlib
 import hmac
 import json
-import logging
 
 from fastapi import FastAPI, HTTPException, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.logging.structured_logging import setup_logger, set_request_id
 from app.services.queue import acquire_review_lock, get_queue
 from app.workers.review_worker import run_review_job
 
-logger = logging.getLogger("aegisai")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter("%(asctime)s | %(name)s | %(levelname)s | %(message)s"))
-logger.addHandler(handler)
+logger = setup_logger("aegisai", context={"service": "aegisai", "version": "0.1.0"})
 
 app = FastAPI(title="AegisAI", version="0.1.0")
 v1_router = APIRouter(prefix="/api/v1")
@@ -37,9 +33,11 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    """Add security headers to every response."""
+async def add_request_id_and_security_headers(request: Request, call_next):
+    """Add request ID and security headers to every response."""
+    req_id = set_request_id()
     response = await call_next(request)
+    response.headers["X-Request-ID"] = req_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -48,7 +46,6 @@ async def add_security_headers(request: Request, call_next):
         "camera=(), microphone=(), geolocation=(), interest-cohort=()"
     )
     response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none';"
-    # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"  # enable when HTTPS
     return response
 
 
