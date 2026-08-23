@@ -33,5 +33,8 @@ node_modules/
 # Docker secrets (private keys — never commit)
 secrets/
 
+# Runtime logs
+logs/
+
 # Runtime balance log
 radar_balance.txt
