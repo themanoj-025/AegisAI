@@ -8,12 +8,12 @@ import hashlib
 import hmac
 import json
 
-from fastapi import FastAPI, HTTPException, Request, APIRouter
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.logging.structured_logging import setup_logger, set_request_id
+from app.logging.structured_logging import set_request_id, setup_logger
 from app.services.queue import acquire_review_lock, get_queue
 from app.workers.review_worker import run_review_job
 

@@ -155,13 +155,13 @@ def _map_hint_to_line(line_hint: str, filename: str, diff_files: list[dict]) -> 
                 target_line = int(match.group(1))
 
         # Check if this line (minus the diff prefix) matches the hint
-        if line.startswith("+") or line.startswith(" "):
+        if line.startswith(("+", " ")):
             actual_line = line[1:] if line.startswith("+") else line[1:]
             if line_hint in actual_line or actual_line in line_hint:
                 return target_line
 
         # Advance line counter for context and added lines
-        if line.startswith("+") or line.startswith(" "):
+        if line.startswith(("+", " ")):
             target_line += 1
 
     return None
