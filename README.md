@@ -47,7 +47,14 @@
 
 ---
 
-> 📸 **Screenshot placeholder:** Add a GIF of a PR review arriving with inline security comments.
+## 📸 Screenshots
+
+> _To add screenshots: run the app, capture your screen, save images to `docs/assets/`, and reference them below._
+>
+> **Suggested screenshots:**
+> - PR review arriving with inline security comments (GIF)
+> - Dashboard showing recent reviews and findings
+> - Docker compose startup logs
 
 ---
 
