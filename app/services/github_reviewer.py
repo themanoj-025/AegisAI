@@ -147,7 +147,7 @@ def _map_hint_to_line(line_hint: str, filename: str, diff_files: list[dict]) -> 
     lines = file_diff.splitlines()
 
     target_line = 0
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         if line.startswith("@@"):
             # Parse the hunk header
             match = re.search(r"\+(\d+)(?:,(\d+))?", line)
