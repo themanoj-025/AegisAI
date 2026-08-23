@@ -32,5 +32,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://user:pass@localhost:5432/aegisai"
     workspace_dir: str = "./workspace"
 
+    # API authentication
+    aegis_api_key: str = ""
+
 
 settings = Settings()

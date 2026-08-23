@@ -8,9 +8,12 @@ import hashlib
 import hmac
 import json
 
-from fastapi import APIRouter, FastAPI, HTTPException, Request
+import secrets
+
+from fastapi import APIRouter, FastAPI, HTTPException, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
 from app.logging.structured_logging import set_request_id, setup_logger
@@ -21,6 +24,26 @@ logger = setup_logger("aegisai", context={"service": "aegisai", "version": "0.1.
 
 app = FastAPI(title="AegisAI", version="0.1.0")
 v1_router = APIRouter(prefix="/api/v1")
+security = HTTPBearer(auto_error=False)
+
+
+async def verify_api_key(
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
+) -> HTTPAuthorizationCredentials:
+    """Verify API key from Authorization header. Enabled when AEGIS_API_KEY is set."""
+    api_key = settings.aegis_api_key
+    if not api_key:
+        return credentials  # No key configured — open access
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not secrets.compare_digest(credentials.credentials, api_key):
+        raise HTTPException(status_code=403, detail="Invalid API key")
+    return credentials
+
+
+# Apply auth to v1 routes (except health check)
+log_level = "API key auth: ENABLED" if settings.aegis_api_key else "API key auth: DISABLED (open access)"
+logger.info("%s", log_level)
 
 # ── CORS ─────────────────────────────────────────────────────────────
 app.add_middleware(
