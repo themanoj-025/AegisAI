@@ -102,7 +102,7 @@ def run_review_job(
             pr_number,
         )
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(
             "Review job failed for %s PR #%d: %s",
             repo_full_name,

@@ -217,7 +217,7 @@ def run_security_agent(pr_files: list[dict]) -> list[dict]:
                 batch_idx,
                 e,
             )
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error(
                 "Batch %d: unexpected error: %s — skipping batch",
                 batch_idx,

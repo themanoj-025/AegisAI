@@ -114,7 +114,7 @@ def clone_pr_repo(
 
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"Git clone timed out for {repo_full_name} (PR #{pr_number})")
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         # Clean up on failure
         if clone_path.exists():
             shutil.rmtree(clone_path, ignore_errors=True)
