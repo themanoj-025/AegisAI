@@ -197,7 +197,7 @@ async def github_webhook(request: Request):
             pr_number,
             head_sha[:7],
         )
-    except Exception as e:
+    except (OSError, ValueError) as e:
         logger.error(
             "Failed to enqueue review job for %s PR #%d: %s",
             repo_full_name,
