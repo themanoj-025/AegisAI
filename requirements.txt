@@ -5,7 +5,7 @@ python-dotenv>=1.2.2
 
 # Prompt 2 dependencies
 PyJWT[crypto]>=2.13.0
-httpx>=0.28.0
+httpx>=0.28.1
 
 # Prompt 3 dependencies
 rq>=2.10.0,<3.0
