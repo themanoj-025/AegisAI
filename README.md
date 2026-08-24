@@ -47,14 +47,15 @@
 
 ---
 
-## 📸 Screenshots
+## 💡 Why I Built This
 
-> _To add screenshots: run the app, capture your screen, save images to `docs/assets/`, and reference them below._
->
-> **Suggested screenshots:**
-> - PR review arriving with inline security comments (GIF)
-> - Dashboard showing recent reviews and findings
-> - Docker compose startup logs
+I built AegisAI because I was tired of waiting for human code reviews to catch simple hardcoded secrets or basic SQL injections. I wanted a system that could act as a first-pass security filter, giving immediate feedback without hallucinating fake vulnerabilities.
+
+## ⚠️ Known Limitations
+
+- **Context Window Limits:** Very large pull requests (e.g., framework upgrades or mass refactors) can exceed the LLM's context window or cause it to lose track of subtle cross-file vulnerabilities.
+- **False Positives in Tests:** The agent occasionally flags intentionally vulnerable code in test files as a true vulnerability, requiring manual "ignore" comments.
+- **Webhook Redundancy:** The current FastAPI webhook receiver is a single instance; if it goes down during a GitHub event delivery, that PR review is dropped unless manually re-triggered.
 
 ---
 
