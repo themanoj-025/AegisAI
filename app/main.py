@@ -25,7 +25,27 @@ from app.workers.review_worker import run_review_job
 
 logger = setup_logger("aegisai", context={"service": "aegisai", "version": "0.1.0"})
 
-app = FastAPI(title="AegisAI", version="0.1.0")
+app = FastAPI(
+    title="AegisAI",
+    description="AI-powered code review tool with automated analysis and reporting.",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "health",
+            "description": "Service health check endpoints",
+        },
+        {
+            "name": "webhooks",
+            "description": "GitHub webhook integration for automated code reviews",
+        },
+        {
+            "name": "reviews",
+            "description": "Code review analysis and reporting",
+        },
+    ],
+)
 v1_router = APIRouter(prefix="/api/v1")
 security = HTTPBearer(auto_error=False)
 
