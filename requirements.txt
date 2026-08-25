@@ -8,7 +8,7 @@ PyJWT[crypto]>=2.13.0
 httpx>=0.28.1
 
 # Prompt 3 dependencies
-rq>=2.10.0,<3.0
+rq>=2.11.0,<3.0
 redis>=8.1.0
 
 # Prompt 4 dependencies
