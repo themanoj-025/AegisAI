@@ -9,7 +9,7 @@ import hmac
 import json
 import secrets
 
-from fastapi import APIRouter, FastAPI, HTTPException, Request, Security
+from fastapi import APIRouter, FastAPI, HTTPException, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -23,7 +23,34 @@ from app.logging.structured_logging import set_request_id, setup_logger
 from app.services.queue import acquire_review_lock, get_queue
 from app.workers.review_worker import run_review_job
 
+try:
+    from prometheus_client import Counter, Histogram, generate_latest
+
+    _PROM_AVAILABLE = True
+except ImportError:
+    _PROM_AVAILABLE = False
+
 logger = setup_logger("aegisai", context={"service": "aegisai", "version": "0.1.0"})
+
+# ── Prometheus metrics ────────────────────────────────────────────────
+if _PROM_AVAILABLE:
+    REQUEST_COUNT = Counter(
+        "aegisai_requests_total",
+        "Total HTTP requests",
+        ["method", "endpoint", "status"],
+    )
+    REQUEST_LATENCY = Histogram(
+        "aegisai_request_duration_seconds",
+        "HTTP request latency in seconds",
+        ["method", "endpoint"],
+        buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+    )
+    WEBHOOK_RECEIVED = Counter(
+        "aegisai_webhook_received_total", "Webhook events received", ["event", "action"])
+    WEBHOOK_QUEUED = Counter(
+        "aegisai_webhook_queued_total", "Review jobs enqueued", ["repo"])
+    WEBHOOK_DUPES = Counter(
+        "aegisai_webhook_deduped_total", "Deduplicated webhooks")
 
 app = FastAPI(
     title="AegisAI",
@@ -86,6 +113,8 @@ app.add_middleware(SlowAPIMiddleware)
 
 @app.middleware("http")
 async def add_request_id_and_security_headers(request: Request, call_next):
+    import time as _time
+    request.state.start_time = _time.time()
     """Add request ID and security headers to every response."""
     req_id = set_request_id()
     response = await call_next(request)
@@ -98,6 +127,18 @@ async def add_request_id_and_security_headers(request: Request, call_next):
         "camera=(), microphone=(), geolocation=(), interest-cohort=()"
     )
     response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none';"
+
+    if _PROM_AVAILABLE:
+        import time as _time
+
+        path = request.url.path
+        REQUEST_COUNT.labels(method=request.method, endpoint=path, status=response.status_code).inc()
+        REQUEST_LATENCY.labels(method=request.method, endpoint=path).observe(
+            _time.time() - request.state.start_time
+            if hasattr(request.state, "start_time")
+            else 0.0
+        )
+
     return response
 
 
@@ -148,7 +189,8 @@ async def github_webhook(request: Request):
     # Parse event type
     event_type = request.headers.get("X-GitHub-Event", "")
     if event_type != "pull_request":
-        logger.debug("Ignoring event type: %s", event_type)
+        if _PROM_AVAILABLE:
+            WEBHOOK_RECEIVED.labels(event=event_type, action="ignore").inc()
         return JSONResponse(
             status_code=200,
             content={
@@ -162,6 +204,8 @@ async def github_webhook(request: Request):
     action: str = payload.get("action", "")
 
     if action not in ("opened", "synchronize", "reopened"):
+        if _PROM_AVAILABLE:
+            WEBHOOK_RECEIVED.labels(event="pull_request", action=action).inc()
         logger.debug("Ignoring pull_request action: %s", action)
         return JSONResponse(
             status_code=200,
@@ -180,6 +224,9 @@ async def github_webhook(request: Request):
     clone_url: str = repo.get("clone_url", "")
     installation_id: int = installation.get("id", 0)
 
+    if _PROM_AVAILABLE:
+        WEBHOOK_RECEIVED.labels(event="pull_request", action=action).inc()
+
     # Log the event clearly
     logger.info(
         "Webhook received | event=pull_request | action=%s | repo=%s | pr=%d | head_sha=%s",
@@ -197,6 +244,8 @@ async def github_webhook(request: Request):
             pr_number,
             head_sha[:7],
         )
+        if _PROM_AVAILABLE:
+            WEBHOOK_DUPES.inc()
         return {"status": "deduplicated"}
 
     # Enqueue the review job for background processing
@@ -211,6 +260,8 @@ async def github_webhook(request: Request):
             clone_url,
             installation_id,
         )
+        if _PROM_AVAILABLE:
+            WEBHOOK_QUEUED.labels(repo=repo_full_name).inc()
         logger.info(
             "Enqueued review job for %s PR #%d (head: %s)",
             repo_full_name,
@@ -227,6 +278,14 @@ async def github_webhook(request: Request):
         return {"status": "error", "detail": "queue_failed"}
 
     return {"status": "received"}
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint."""
+    if not _PROM_AVAILABLE:
+        return {"status": "prometheus_client not installed"}
+    return Response(content=generate_latest(), media_type="text/plain")
 
 
 app.include_router(v1_router)
