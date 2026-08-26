@@ -31,7 +31,7 @@ class TestSettings:
         try:
             s.llm_provider = "changed"
             assert False, "Should have raised an error"
-        except Exception:
+        except (AttributeError, ValueError, TypeError):
             pass  # Expected — frozen model
 
     def test_github_fields(self):
