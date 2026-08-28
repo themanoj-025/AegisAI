@@ -112,7 +112,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 
 @app.middleware("http")
-async def add_request_id_and_security_headers(request: Request, call_next):
+async def add_request_id_and_security_headers(request: Request, call_next) -> Any:
     import time as _time
     request.state.start_time = _time.time()
     """Add request ID and security headers to every response."""
@@ -164,13 +164,13 @@ def verify_github_signature(payload: bytes, signature_header: str | None) -> boo
 
 
 @v1_router.get("/health")
-async def health_check():
+async def health_check() -> dict[str, Any]:
     """Simple health check endpoint for deployment probes."""
     return {"status": "ok"}
 
 
 @app.post("/webhooks/github")
-async def github_webhook(request: Request):
+async def github_webhook(request: Request) -> Response:
     """Receive, verify, and acknowledge GitHub webhook events.
 
     Reads the raw request body for signature verification, validates the
@@ -281,7 +281,7 @@ async def github_webhook(request: Request):
 
 
 @app.get("/metrics")
-async def metrics():
+async def metrics() -> dict[str, Any]:
     """Prometheus metrics endpoint."""
     if not _PROM_AVAILABLE:
         return {"status": "prometheus_client not installed"}
@@ -292,6 +292,6 @@ app.include_router(v1_router)
 
 
 @app.get("/health")
-async def root_health_check():
+async def root_health_check() -> dict[str, Any]:
     """Root health check for Docker probes (backward compat)."""
     return {"status": "ok"}

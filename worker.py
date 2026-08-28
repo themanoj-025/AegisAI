@@ -23,7 +23,7 @@ handler.setFormatter(logging.Formatter("%(asctime)s | worker | %(levelname)s | %
 logger.addHandler(handler)
 
 
-def main():
+def main() -> None:
     """Start the RQ worker, listening on the default queue."""
     logger.info("Starting AegisAI worker...")
     logger.info("Redis URL: %s", settings.redis_url)
