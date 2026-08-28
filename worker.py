@@ -28,9 +28,9 @@ def main() -> None:
     logger.info("Starting AegisAI worker...")
     logger.info("Redis URL: %s", settings.redis_url)
 
-    from app.workers.review_worker import (
-        run_review_job,  # noqa: F401 — register the job function
-    )
+    from app.workers.review_worker import run_review_job
+
+    _ = run_review_job  # register the job function with RQ
 
     worker = Worker(["default"], connection=redis.Redis.from_url(settings.redis_url))
     worker.work()
