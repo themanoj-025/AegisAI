@@ -1,55 +1,37 @@
-"""Tests for app.services.queue — deduplication lock mechanism (mocked Redis)."""
+"""Tests for job queue service."""
 
-from unittest.mock import MagicMock, patch
+import queue
 
-from app.services.queue import acquire_review_lock
+from app.services.queue import JobQueue
 
 
-class TestAcquireReviewLock:
-    @patch("app.services.queue.get_redis")
-    def test_acquires_lock_on_first_call(self, mock_get_redis):
-        mock_redis = MagicMock()
-        mock_redis.setnx.return_value = True
-        mock_get_redis.return_value = mock_redis
+class TestJobQueue:
+    """Tests for the in-process job queue."""
 
-        result = acquire_review_lock("org/repo", "abc123")
-        assert result is True
-        mock_redis.setnx.assert_called_once()
-        mock_redis.expire.assert_called_once()
+    def test_enqueue_and_dequeue(self):
+        jq = JobQueue()
+        jq.enqueue({"type": "review", "repo": "owner/repo"})
+        job = jq.dequeue()
+        assert job is not None
+        assert job["type"] == "review"
 
-    @patch("app.services.queue.get_redis")
-    def test_rejects_duplicate(self, mock_get_redis):
-        mock_redis = MagicMock()
-        mock_redis.setnx.return_value = False  # Lock already exists
-        mock_get_redis.return_value = mock_redis
+    def test_empty_queue_returns_none(self):
+        jq = JobQueue()
+        assert jq.dequeue() is None
 
-        result = acquire_review_lock("org/repo", "abc123")
-        assert result is False
+    def test_fifo_order(self):
+        jq = JobQueue()
+        jq.enqueue({"id": 1})
+        jq.enqueue({"id": 2})
+        jq.enqueue({"id": 3})
+        assert jq.dequeue()["id"] == 1
+        assert jq.dequeue()["id"] == 2
+        assert jq.dequeue()["id"] == 3
 
-    @patch("app.services.queue.get_redis")
-    def test_lock_key_format(self, mock_get_redis):
-        mock_redis = MagicMock()
-        mock_redis.setnx.return_value = True
-        mock_get_redis.return_value = mock_redis
-
-        acquire_review_lock("org/repo", "abc123def")
-        call_args = mock_redis.setnx.call_args[0]
-        assert call_args[0] == "review_lock:org/repo:abc123def"
-
-    @patch("app.services.queue.get_redis")
-    def test_custom_ttl(self, mock_get_redis):
-        mock_redis = MagicMock()
-        mock_redis.setnx.return_value = True
-        mock_get_redis.return_value = mock_redis
-
-        acquire_review_lock("org/repo", "abc123", ttl=120)
-        mock_redis.expire.assert_called_once_with("review_lock:org/repo:abc123", 120)
-
-    @patch("app.services.queue.get_redis")
-    def test_default_ttl_is_600(self, mock_get_redis):
-        mock_redis = MagicMock()
-        mock_redis.setnx.return_value = True
-        mock_get_redis.return_value = mock_redis
-
-        acquire_review_lock("org/repo", "abc123")
-        mock_redis.expire.assert_called_once_with("review_lock:org/repo:abc123", 600)
+    def test_queue_size(self):
+        jq = JobQueue()
+        assert jq.size() == 0
+        jq.enqueue({"id": 1})
+        assert jq.size() == 1
+        jq.dequeue()
+        assert jq.size() == 0
