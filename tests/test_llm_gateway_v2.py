@@ -1,6 +1,5 @@
 """Tests for LLM gateway provider selection and retry."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from app.services.llm_gateway import _RetryableError, call_llm
@@ -18,7 +17,8 @@ class TestLLMGatewayV2:
         try:
             raise ConnectionError("connection refused")
         except ConnectionError as orig:
-            err = _RetryableError("retryable") from orig
+            err = _RetryableError("retryable")
+            err.__cause__ = orig
             assert err.__cause__ is orig
 
     @patch("app.services.llm_gateway._get_provider")
