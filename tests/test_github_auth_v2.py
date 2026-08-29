@@ -1,9 +1,6 @@
 """Tests for GitHub auth service (installation token)."""
 
-import time
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 from app.services.github_auth import verify_webhook_signature
 

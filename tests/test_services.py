@@ -2,10 +2,9 @@
 
 import pytest
 
-from app.services.secrets_redactor import redact_secrets
-from app.services.diff_extractor import _is_noise_file, _parse_diff_output
 from app.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError, CircuitState
-
+from app.services.diff_extractor import _is_noise_file, _parse_diff_output
+from app.services.secrets_redactor import redact_secrets
 
 # ── Secrets Redactor ────────────────────────────────────────────────────────
 
@@ -236,17 +235,15 @@ class TestCircuitBreaker:
 
     def test_context_manager_records_failure(self) -> None:
         cb = CircuitBreaker(failure_threshold=5)
-        with pytest.raises(ValueError):
-            with cb:
-                raise ValueError("test")
+        with pytest.raises(ValueError), cb:
+            raise ValueError("test")
         assert cb._failure_count == 1
 
     def test_context_manager_open_raises(self) -> None:
         cb = CircuitBreaker(failure_threshold=1)
         cb.record_failure()
-        with pytest.raises(CircuitBreakerOpenError):
-            with cb:
-                pass
+        with pytest.raises(CircuitBreakerOpenError), cb:
+            pass
 
     def test_success_count_increments(self) -> None:
         cb = CircuitBreaker(failure_threshold=5)

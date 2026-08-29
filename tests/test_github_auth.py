@@ -3,11 +3,10 @@
 import hashlib
 import hmac
 import json
-from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.services.github_auth import verify_webhook_signature, _parse_event
+from app.services.github_auth import _parse_event, verify_webhook_signature
 
 
 class TestVerifyWebhookSignature:

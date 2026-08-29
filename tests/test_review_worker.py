@@ -1,7 +1,5 @@
 """Tests for review worker."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 
 from app.workers.review_worker import ReviewWorker
 
