@@ -2,9 +2,6 @@
 
 import os
 import tempfile
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from app.services.repo_manager import _build_authenticated_clone_url, _random_suffix, cleanup_workspace
 

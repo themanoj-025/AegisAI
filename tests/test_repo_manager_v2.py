@@ -1,11 +1,10 @@
 """Tests for repo manager (clone logic)."""
 
-import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.services.repo_manager import clone_pr_repo, _random_suffix, _build_authenticated_clone_url
+from app.services.repo_manager import clone_pr_repo
 
 
 class TestClonePrRepo:

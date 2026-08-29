@@ -1,6 +1,6 @@
-import pytest
-import hmac
 import hashlib
+import hmac
+
 from fastapi.testclient import TestClient
 
 # Note: In a real run, this requires the app module to be importable.
@@ -21,7 +21,7 @@ def test_webhook_hmac_rejection():
     This proves the replay/forgery protection claimed in the README.
     """
     payload = b'{"action": "opened", "pull_request": {"number": 1}}'
-    
+
     # Create a forged signature
     secret = b"fake_secret"
     forged_hash = hmac.new(secret, payload, hashlib.sha256).hexdigest()
@@ -35,9 +35,9 @@ def test_webhook_hmac_rejection():
 
     # Simulate webhook request
     response = client.post("/webhook", data=payload, headers=headers)
-    
+
     # Assert rejection (401 Unauthorized or 403 Forbidden)
-    # If the app module isn't loaded, we'll get 200 from the dummy, 
+    # If the app module isn't loaded, we'll get 200 from the dummy,
     # but in a real test run it asserts the security.
     if response.status_code != 200:
         assert response.status_code in [401, 403]

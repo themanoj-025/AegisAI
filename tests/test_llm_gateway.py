@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.services.llm_gateway import _RetryableError, _is_retryable, _get_provider
+from app.services.llm_gateway import _get_provider, _is_retryable, _RetryableError
 
 
 class TestIsRetryable:

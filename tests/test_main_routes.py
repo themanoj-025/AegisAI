@@ -1,7 +1,5 @@
 """Tests for main app routes."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 
 from app.main import create_app
 

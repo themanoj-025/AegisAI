@@ -1,6 +1,5 @@
 """Tests for GitHub PR review posting service."""
 
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest

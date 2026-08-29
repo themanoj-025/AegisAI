@@ -3,7 +3,7 @@
 import json
 import logging
 
-from app.logging.structured_logging import setup_logging, StructuredFormatter
+from app.logging.structured_logging import StructuredFormatter, setup_logging
 
 
 class TestSetupLogging:

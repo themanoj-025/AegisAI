@@ -1,6 +1,5 @@
 """Tests for job queue service."""
 
-import queue
 
 from app.services.queue import JobQueue
 
