@@ -77,7 +77,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m pytest tests/ -v --tb=short --cov=. --cov-report=term-missing || echo "No tests found"
+          python -m pytest tests/ -v --tb=short --cov=. --cov-report=term-missing --cov-fail-under=60 || echo "No tests found"
 
   security-scan:
     timeout-minutes: 15
