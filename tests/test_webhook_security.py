@@ -3,7 +3,6 @@ import hmac
 
 from fastapi.testclient import TestClient
 
-
 pytestmark = pytest.mark.slow
 # Note: In a real run, this requires the app module to be importable.
 try:
