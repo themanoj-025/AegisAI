@@ -7,7 +7,7 @@ from app.config import Settings
 
 pytestmark = pytest.mark.slow
 class TestSettings:
-    def test_defaults_are_set(self):
+    def test_defaults_are_set(self) -> None:
         """Settings should have sensible defaults even without env vars."""
         with patch.dict(os.environ, {}, clear=False):
             s = Settings()
@@ -18,14 +18,14 @@ class TestSettings:
             assert s.claude_model == "claude-sonnet-4-20250514"
             assert s.openai_model == "gpt-4o"
 
-    def test_env_override_works(self):
+    def test_env_override_works(self) -> None:
         """Environment variables should override defaults."""
         with patch.dict(os.environ, {"LLM_PROVIDER": "openai", "REDIS_URL": "redis://prod:6379"}):
             s = Settings()
             assert s.llm_provider == "openai"
             assert s.redis_url == "redis://prod:6379"
 
-    def test_settings_are_frozen(self):
+    def test_settings_are_frozen(self) -> None:
         """Settings should be immutable after creation."""
         s = Settings()
         try:
@@ -34,7 +34,7 @@ class TestSettings:
         except (AttributeError, ValueError, TypeError):
             pass  # Expected — frozen model
 
-    def test_github_fields(self):
+    def test_github_fields(self) -> None:
         """GitHub-related settings should be present."""
         s = Settings()
         assert hasattr(s, "github_app_id")

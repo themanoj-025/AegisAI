@@ -13,12 +13,12 @@ except ImportError:
 
     app = FastAPI()
     @app.post("/webhook")
-    async def webhook():
+    async def webhook() -> dict[str, object]:
         return {"status": "ok"}
 
 client = TestClient(app)
 
-def test_webhook_hmac_rejection():
+def test_webhook_hmac_rejection() -> None:
     """
     Test that the webhook receiver rejects requests with an invalid HMAC signature.
     This proves the replay/forgery protection claimed in the README.

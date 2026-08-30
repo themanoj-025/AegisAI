@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.services.llm_gateway import call_llm
 
 
-def main():
+def main() -> None:
     """Run a trivial test prompt to verify the LLM gateway works."""
     print("=== AegisAI LLM Gateway Test ===\n")
 

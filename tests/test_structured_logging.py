@@ -9,14 +9,14 @@ from app.logging.structured_logging import StructuredFormatter, setup_logging
 class TestSetupLogging:
     """Tests for setup_logging."""
 
-    def test_creates_handler(self):
+    def test_creates_handler(self) -> None:
         logger = logging.getLogger("aegisai.test_sl")
         original_handlers = logger.handlers[:]
         setup_logging()
         # Should not raise
         logger.handlers = original_handlers
 
-    def test_structured_formatter(self):
+    def test_structured_formatter(self) -> None:
         fmt = StructuredFormatter()
         record = logging.LogRecord(
             name="test", level=logging.INFO, pathname="test.py",

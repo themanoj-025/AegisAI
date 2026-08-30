@@ -6,11 +6,11 @@ from app.services.diff_extractor import extract_diff_files, parse_diff
 class TestExtractDiffFiles:
     """Tests for extract_diff_files."""
 
-    def test_empty_diff(self):
+    def test_empty_diff(self) -> None:
         result = extract_diff_files("")
         assert result == []
 
-    def test_single_file_diff(self):
+    def test_single_file_diff(self) -> None:
         diff = (
             "diff --git a/app.py b/app.py\n"
             "index abc..def 100644\n"
@@ -26,7 +26,7 @@ class TestExtractDiffFiles:
         assert len(result) == 1
         assert result[0]["filename"] == "app.py"
 
-    def test_multi_file_diff(self):
+    def test_multi_file_diff(self) -> None:
         diff = (
             "diff --git a/a.py b/a.py\n"
             "--- a/a.py\n"
@@ -44,7 +44,7 @@ class TestExtractDiffFiles:
         result = extract_diff_files(diff)
         assert len(result) == 2
 
-    def test_binary_files_skipped(self):
+    def test_binary_files_skipped(self) -> None:
         diff = (
             "diff --git a/image.png b/image.png\n"
             "Binary files a/image.png and b/image.png differ\n"
@@ -63,7 +63,7 @@ class TestExtractDiffFiles:
 class TestParseDiff:
     """Tests for parse_diff."""
 
-    def test_additions_and_deletions(self):
+    def test_additions_and_deletions(self) -> None:
         diff_text = (
             "@@ -1,3 +1,4 @@\n"
             " def main():\n"
