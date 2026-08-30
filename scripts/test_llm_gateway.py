@@ -47,7 +47,7 @@ def main():
         else:
             print(f"\n⚠ Response parsed but unexpected content: {parsed}")
 
-    except Exception as e:
+    except (json.JSONDecodeError, OSError, ValueError) as e:
         print(f"\n✗ LLM gateway test FAILED: {e}")
         print("\nTroubleshooting tips:")
         print(f"  1. Check that {provider} API key is correct in .env")
