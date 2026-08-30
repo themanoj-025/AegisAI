@@ -6,6 +6,9 @@ from unittest.mock import patch
 from app.config import Settings
 
 
+
+
+pytestmark = pytest.mark.slow
 class TestSettings:
     def test_defaults_are_set(self):
         """Settings should have sensible defaults even without env vars."""

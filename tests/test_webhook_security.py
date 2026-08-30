@@ -3,11 +3,15 @@ import hmac
 
 from fastapi.testclient import TestClient
 
+
+pytestmark = pytest.mark.slow
 # Note: In a real run, this requires the app module to be importable.
 try:
     from app.main import app
 except ImportError:
     from fastapi import FastAPI
+
+
     app = FastAPI()
     @app.post("/webhook")
     async def webhook():

@@ -9,6 +9,9 @@ from fastapi.testclient import TestClient
 
 from app.main import app, verify_github_signature
 
+
+
+pytestmark = pytest.mark.slow
 client = TestClient(app)
 
 
