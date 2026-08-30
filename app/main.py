@@ -73,6 +73,17 @@ app = FastAPI(
         },
     ],
 )
+
+# --- OpenTelemetry distributed tracing (OTEL_ENABLED=true) ---
+try:
+    from app.tracing import setup_tracing
+    _otel_ok = setup_tracing("aegisai-api")
+    if _otel_ok:
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+        FastAPIInstrumentor.instrument_app(app)
+except ImportError:
+    pass
+
 v1_router = APIRouter(prefix="/api/v1")
 security = HTTPBearer(auto_error=False)
 
