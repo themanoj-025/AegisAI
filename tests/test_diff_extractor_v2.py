@@ -6,7 +6,7 @@ from app.services.diff_extractor import extract_diff_files
 class TestExtractDiffFilesV2:
     """Additional tests for extract_diff_files."""
 
-    def test_rename_only(self):
+    def test_rename_only(self) -> None:
         diff = (
             "diff --git a/old.py b/new.py\n"
             "rename from old.py\n"
@@ -15,7 +15,7 @@ class TestExtractDiffFilesV2:
         result = extract_diff_files(diff)
         assert len(result) >= 0  # Rename-only diffs may or may not be included
 
-    def test_deletion(self):
+    def test_deletion(self) -> None:
         diff = (
             "diff --git a/deleted.py b/deleted.py\n"
             "deleted file mode 100644\n"
@@ -27,7 +27,7 @@ class TestExtractDiffFilesV2:
         result = extract_diff_files(diff)
         assert len(result) == 1
 
-    def test_large_diff(self):
+    def test_large_diff(self) -> None:
         # Simulate a large diff with many files
         parts = []
         for i in range(20):

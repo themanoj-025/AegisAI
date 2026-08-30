@@ -4,19 +4,19 @@ from app.services.secrets_redactor import redact_secrets
 
 
 class TestRedactSecrets:
-    def test_api_key_assignment(self):
+    def test_api_key_assignment(self) -> None:
         text = 'api_key = "sk-1234567890abcdef1234"'
         result = redact_secrets(text)
         assert "sk-1234567890abcdef1234" not in result
         assert "[REDACTED_SECRET]" in result
 
-    def test_aws_access_key(self):
+    def test_aws_access_key(self) -> None:
         text = 'aws_key = "AKIAIOSFODNN7EXAMPLE"'
         result = redact_secrets(text)
         assert "AKIAIOSFODNN7EXAMPLE" not in result
         assert "[REDACTED_SECRET]" in result
 
-    def test_private_key_block(self):
+    def test_private_key_block(self) -> None:
         text = (
             "-----BEGIN RSA PRIVATE KEY-----\n"
             "MIIEpAIBAAKCAQEA0...\n"
@@ -26,34 +26,34 @@ class TestRedactSecrets:
         assert "BEGIN RSA PRIVATE KEY" not in result
         assert "[REDACTED_SECRET]" in result
 
-    def test_secret_assignment(self):
+    def test_secret_assignment(self) -> None:
         text = 'secret = "aB3dE5fG7hI9jK1lM3nO"'
         result = redact_secrets(text)
         assert "aB3dE5fG7hI9jK1lM3nO" not in result
         assert "[REDACTED_SECRET]" in result
 
-    def test_token_assignment(self):
+    def test_token_assignment(self) -> None:
         text = 'token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef12"'
         result = redact_secrets(text)
         assert "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef12" not in result
 
-    def test_password_assignment(self):
+    def test_password_assignment(self) -> None:
         text = 'password = "SuperSecretPass123!"'
         result = redact_secrets(text)
         assert "SuperSecretPass123!" not in result
 
-    def test_no_secrets_unchanged(self):
+    def test_no_secrets_unchanged(self) -> None:
         text = "x = 1\ny = 'hello'\nprint(x + y)"
         result = redact_secrets(text)
         assert result == text
 
-    def test_short_strings_not_redacted(self):
+    def test_short_strings_not_redacted(self) -> None:
         # Strings shorter than 16 chars should not be matched
         text = 'api_key = "short"'
         result = redact_secrets(text)
         assert "short" in result  # Not redacted — too short
 
-    def test_multiple_secrets(self):
+    def test_multiple_secrets(self) -> None:
         text = (
             'api_key = "1234567890abcdef1234"\n'
             'secret = "abcdef1234567890abcd"\n'
@@ -63,7 +63,7 @@ class TestRedactSecrets:
         # Should have at least 2 redactions
         assert result.count("[REDACTED_SECRET]") >= 2
 
-    def test_mixed_content(self):
+    def test_mixed_content(self) -> None:
         text = (
             "# Normal comment\n"
             "def hello():\n"
@@ -75,7 +75,7 @@ class TestRedactSecrets:
         assert "return 'ok'" in result
         assert "1234567890abcdef1234" not in result
 
-    def test_colon_separator(self):
+    def test_colon_separator(self) -> None:
         text = 'api_key: "1234567890abcdef1234"'
         result = redact_secrets(text)
         assert "1234567890abcdef1234" not in result

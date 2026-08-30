@@ -11,7 +11,7 @@ class TestClonePrRepo:
     """Tests for clone_pr_repo."""
 
     @patch("app.services.repo_manager.subprocess.run")
-    def test_successful_clone(self, mock_run):
+    def test_successful_clone(self, mock_run) -> None:
         mock_run.return_value = MagicMock(returncode=0, stderr="")
         # Mock the checkout too
         mock_run.side_effect = [
@@ -30,7 +30,7 @@ class TestClonePrRepo:
                 assert result is not None
 
     @patch("app.services.repo_manager.subprocess.run")
-    def test_clone_failure_raises(self, mock_run):
+    def test_clone_failure_raises(self, mock_run) -> None:
         mock_run.return_value = MagicMock(returncode=1, stderr="fatal: repository not found")
         with patch("app.services.repo_manager.Path.mkdir"):
             with patch("app.services.repo_manager.Path.resolve", return_value="/tmp/test"):
@@ -44,7 +44,7 @@ class TestClonePrRepo:
                     )
 
     @patch("app.services.repo_manager.subprocess.run")
-    def test_checkout_failure_raises(self, mock_run):
+    def test_checkout_failure_raises(self, mock_run) -> None:
         mock_run.side_effect = [
             MagicMock(returncode=0, stderr=""),  # clone succeeds
             MagicMock(returncode=1, stderr="fatal: bad object abc123"),  # checkout fails

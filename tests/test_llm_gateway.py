@@ -8,23 +8,23 @@ from app.services.llm_gateway import _get_provider, _is_retryable, _RetryableErr
 class TestIsRetryable:
     """Tests for _is_retryable helper."""
 
-    def test_retryable_error_is_retryable(self):
+    def test_retryable_error_is_retryable(self) -> None:
         assert _is_retryable(_RetryableError("transient")) is True
 
-    def test_value_error_not_retryable(self):
+    def test_value_error_not_retryable(self) -> None:
         assert _is_retryable(ValueError("bad")) is False
 
-    def test_runtime_error_not_retryable(self):
+    def test_runtime_error_not_retryable(self) -> None:
         assert _is_retryable(RuntimeError("bad")) is False
 
-    def test_os_error_not_retryable(self):
+    def test_os_error_not_retryable(self) -> None:
         assert _is_retryable(OSError("bad")) is False
 
 
 class TestGetProvider:
     """Tests for _get_provider (requires env vars)."""
 
-    def test_unknown_provider_raises(self):
+    def test_unknown_provider_raises(self) -> None:
         import app.services.llm_gateway as mod
 
         mod._provider = None
@@ -33,7 +33,7 @@ class TestGetProvider:
                 _get_provider()
 
     @patch("app.services.llm_gateway.settings")
-    def test_anthropic_provider_created(self, mock_settings):
+    def test_anthropic_provider_created(self, mock_settings) -> None:
         import app.services.llm_gateway as mod
 
         mod._provider = None
@@ -47,7 +47,7 @@ class TestGetProvider:
         mod._provider = None  # cleanup
 
     @patch("app.services.llm_gateway.settings")
-    def test_openai_provider_created(self, mock_settings):
+    def test_openai_provider_created(self, mock_settings) -> None:
         import app.services.llm_gateway as mod
 
         mod._provider = None
@@ -63,9 +63,9 @@ class TestGetProvider:
 class TestRetryableError:
     """Tests for _RetryableError."""
 
-    def test_message_preserved(self):
+    def test_message_preserved(self) -> None:
         err = _RetryableError("rate limited")
         assert str(err) == "rate limited"
 
-    def test_is_exception(self):
+    def test_is_exception(self) -> None:
         assert issubclass(_RetryableError, Exception)

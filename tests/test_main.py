@@ -18,7 +18,7 @@ client = TestClient(app)
 
 class TestVerifyGithubSignature:
     @patch("app.main.settings")
-    def test_valid_signature(self, mock_settings):
+    def test_valid_signature(self, mock_settings) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         payload = b'{"action": "opened"}'
         sig = hmac.new(b"test-secret", payload, hashlib.sha256).hexdigest()
@@ -26,21 +26,21 @@ class TestVerifyGithubSignature:
         assert verify_github_signature(payload, header) is True
 
     @patch("app.main.settings")
-    def test_invalid_signature(self, mock_settings):
+    def test_invalid_signature(self, mock_settings) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         payload = b'{"action": "opened"}'
         assert verify_github_signature(payload, "sha256=bad_signature") is False
 
     @patch("app.main.settings")
-    def test_missing_header(self, mock_settings):
+    def test_missing_header(self, mock_settings) -> None:
         assert verify_github_signature(b"payload", None) is False
 
     @patch("app.main.settings")
-    def test_empty_header(self, mock_settings):
+    def test_empty_header(self, mock_settings) -> None:
         assert verify_github_signature(b"payload", "") is False
 
     @patch("app.main.settings")
-    def test_missing_sha256_prefix(self, mock_settings):
+    def test_missing_sha256_prefix(self, mock_settings) -> None:
         assert verify_github_signature(b"payload", "abc123") is False
 
 
@@ -48,7 +48,7 @@ class TestVerifyGithubSignature:
 
 
 class TestHealthEndpoint:
-    def test_health_returns_ok(self):
+    def test_health_returns_ok(self) -> None:
         response = client.get("/api/v1/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
@@ -61,7 +61,7 @@ class TestGithubWebhook:
     @patch("app.main.acquire_review_lock")
     @patch("app.main.get_queue")
     @patch("app.main.settings")
-    def test_webhook_ignored_event_type(self, mock_settings, mock_queue, mock_lock):
+    def test_webhook_ignored_event_type(self, mock_settings, mock_queue, mock_lock) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         payload = json.dumps({"action": "opened"}).encode()
         sig = hmac.new(b"test-secret", payload, hashlib.sha256).hexdigest()
@@ -79,7 +79,7 @@ class TestGithubWebhook:
     @patch("app.main.acquire_review_lock")
     @patch("app.main.get_queue")
     @patch("app.main.settings")
-    def test_webhook_ignored_action(self, mock_settings, mock_queue, mock_lock):
+    def test_webhook_ignored_action(self, mock_settings, mock_queue, mock_lock) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         payload = json.dumps({"action": "closed", "pull_request": {}, "repository": {}}).encode()
         sig = hmac.new(b"test-secret", payload, hashlib.sha256).hexdigest()
@@ -95,7 +95,7 @@ class TestGithubWebhook:
         assert response.json()["status"] == "ignored"
 
     @patch("app.main.settings")
-    def test_webhook_invalid_signature_rejected(self, mock_settings):
+    def test_webhook_invalid_signature_rejected(self, mock_settings) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         response = client.post(
             "/webhooks/github",
@@ -109,7 +109,7 @@ class TestGithubWebhook:
 
     @patch("app.main.acquire_review_lock", return_value=False)
     @patch("app.main.settings")
-    def test_webhook_deduplicated(self, mock_settings, mock_lock):
+    def test_webhook_deduplicated(self, mock_settings, mock_lock) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         pr_payload = {
             "action": "opened",
@@ -137,7 +137,7 @@ class TestGithubWebhook:
     @patch("app.main.acquire_review_lock", return_value=True)
     @patch("app.main.get_queue")
     @patch("app.main.settings")
-    def test_webhook_enqueues_review(self, mock_settings, mock_queue, mock_lock):
+    def test_webhook_enqueues_review(self, mock_settings, mock_queue, mock_lock) -> None:
         mock_settings.github_webhook_secret = "test-secret"
         mock_q = MagicMock()
         mock_queue.return_value = mock_q
@@ -165,7 +165,7 @@ class TestGithubWebhook:
         assert response.json()["status"] == "received"
         mock_q.enqueue.assert_called_once()
 
-    def test_security_headers_present(self):
+    def test_security_headers_present(self) -> None:
         response = client.get("/api/v1/health")
         assert response.headers.get("X-Content-Type-Options") == "nosniff"
         assert response.headers.get("X-Frame-Options") == "DENY"
