@@ -1,17 +1,19 @@
-import pytest
-
-pytestmark = pytest.mark.integration
-
-"""Tests for app.main — webhook signature verification, health check, and webhook handling."""
-
 import hashlib
 import hmac
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, verify_github_signature
+
+pytestmark = pytest.mark.integration
+
+"""Tests for app.main — webhook signature verification, health check, and webhook handling."""
+
+
+
 
 pytestmark = pytest.mark.slow
 client = TestClient(app)

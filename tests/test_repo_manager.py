@@ -1,13 +1,15 @@
+import os
+import tempfile
+
 import pytest
+
+from app.services.repo_manager import _build_authenticated_clone_url, _random_suffix, cleanup_workspace
 
 pytestmark = pytest.mark.integration
 
 """Tests for repository cloning and workspace management."""
 
-import os
-import tempfile
 
-from app.services.repo_manager import _build_authenticated_clone_url, _random_suffix, cleanup_workspace
 
 
 class TestRandomSuffix:

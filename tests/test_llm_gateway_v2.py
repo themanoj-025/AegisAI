@@ -1,12 +1,14 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
+
+from app.services.llm_gateway import _RetryableError, call_llm
 
 pytestmark = pytest.mark.unit
 
 """Tests for LLM gateway provider selection and retry."""
 
-from unittest.mock import MagicMock, patch
 
-from app.services.llm_gateway import _RetryableError, call_llm
 
 
 class TestLLMGatewayV2:
