@@ -6,6 +6,9 @@ import pytest
 
 from app.services.repo_manager import clone_pr_repo
 
+pytestmark = pytest.mark.integration
+
+
 
 class TestClonePrRepo:
     """Tests for clone_pr_repo."""

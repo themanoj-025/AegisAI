@@ -6,6 +6,9 @@ import pytest
 
 from app.services.github_reviewer import _build_review_body, _map_hint_to_line, post_review
 
+pytestmark = pytest.mark.integration
+
+
 
 class TestBuildReviewBody:
     """Tests for _build_review_body."""

@@ -1,7 +1,11 @@
+import pytest
 import hashlib
 import hmac
 
 from fastapi.testclient import TestClient
+
+pytestmark = pytest.mark.integration
+
 
 pytestmark = pytest.mark.slow
 # Note: In a real run, this requires the app module to be importable.

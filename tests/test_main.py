@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.integration
+
 """Tests for app.main — webhook signature verification, health check, and webhook handling."""
 
 import hashlib

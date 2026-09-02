@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.integration
+
 """Tests for repository cloning and workspace management."""
 
 import os

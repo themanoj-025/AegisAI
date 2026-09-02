@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.integration
+
 """Tests for app.config — Settings loading with defaults and environment overrides."""
 
 import os
