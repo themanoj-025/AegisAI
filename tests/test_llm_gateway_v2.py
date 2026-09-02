@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.unit
+
 """Tests for LLM gateway provider selection and retry."""
 
 from unittest.mock import MagicMock, patch

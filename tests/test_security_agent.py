@@ -7,6 +7,9 @@ from unittest.mock import patch
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
+
 
 class TestExtractJson:
     """_extract_json parses LLM responses with various formatting."""
