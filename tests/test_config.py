@@ -1,13 +1,15 @@
+import os
+from unittest.mock import patch
+
 import pytest
+
+from app.config import Settings
 
 pytestmark = pytest.mark.integration
 
 """Tests for app.config — Settings loading with defaults and environment overrides."""
 
-import os
-from unittest.mock import patch
 
-from app.config import Settings
 
 pytestmark = pytest.mark.slow
 class TestSettings:
