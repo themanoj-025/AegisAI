@@ -65,6 +65,7 @@ def check_dependency(
     try:
         probe()
     except Exception as e:
+        # Health checks must never raise — capture the failure instead
         return {
             "name": name,
             "status": "down",
