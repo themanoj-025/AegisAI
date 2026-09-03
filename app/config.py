@@ -49,5 +49,9 @@ class Settings(BaseSettings):
     review_job_max_retries: int = 3
     review_job_backoff: str = "60,300,900"  # seconds between retries
 
+    # Ops alerting — Slack-compatible incoming webhook notified when a webhook
+    # event is dead-lettered (leave empty to disable alerts)
+    alert_webhook_url: str = ""
+
 
 settings = Settings()
