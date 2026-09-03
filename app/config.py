@@ -38,5 +38,16 @@ class Settings(BaseSettings):
     # CORS — comma-separated list of allowed origins (AEGIS_CORS_ORIGINS)
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
+    # Webhook retry queue — when a review job cannot be enqueued, the event is
+    # persisted and retried with exponential backoff before dead-lettering.
+    webhook_retry_queue: str = "webhook-retry"
+    webhook_retry_max_attempts: int = 5
+    webhook_retry_backoff: str = "60,300,900,1800"  # seconds between retries
+
+    # Review job execution — transient worker failures are retried by RQ.
+    review_job_timeout: int = 1800
+    review_job_max_retries: int = 3
+    review_job_backoff: str = "60,300,900"  # seconds between retries
+
 
 settings = Settings()

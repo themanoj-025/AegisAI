@@ -8,8 +8,9 @@ import hashlib
 import hmac
 import json
 import secrets
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, FastAPI, HTTPException, Request, Response, Security
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -20,8 +21,13 @@ from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.logging.structured_logging import set_request_id, setup_logger
-from app.services.queue import acquire_review_lock, get_queue
-from app.workers.review_worker import run_review_job
+from app.services.webhook_retry import (
+    clear_dlq,
+    enqueue_review_event,
+    get_retry_stats,
+    list_dlq,
+    replay_dlq,
+)
 
 try:
     from prometheus_client import Counter, Histogram, generate_latest
@@ -51,6 +57,19 @@ if _PROM_AVAILABLE:
         "aegisai_webhook_queued_total", "Review jobs enqueued", ["repo"])
     WEBHOOK_DUPES = Counter(
         "aegisai_webhook_deduped_total", "Deduplicated webhooks")
+    WEBHOOK_RETRY_SCHEDULED = Counter(
+        "aegisai_webhook_retry_scheduled_total",
+        "Webhook events scheduled for retry",
+        ["repo"],
+    )
+    WEBHOOK_ENQUEUE_FAILED = Counter(
+        "aegisai_webhook_enqueue_failed_total",
+        "Webhook events that could not be enqueued or persisted",
+        ["repo"],
+    )
+    WEBHOOK_REPLAYED = Counter(
+        "aegisai_webhook_replayed_total",
+        "Dead-lettered webhook events replayed via the admin API")
 
 app = FastAPI(
     title="AegisAI",
@@ -247,8 +266,33 @@ async def github_webhook(request: Request) -> Response:
         head_sha,
     )
 
-    # Deduplication: check if a review is already in progress for this head SHA
-    if not acquire_review_lock(repo_full_name, head_sha):
+    # Build the event payload — enqueued directly or persisted to the retry
+    # queue with dead-letter handling if the queue is temporarily unavailable.
+    event = {
+        "repo": repo_full_name,
+        "pr_number": pr_number,
+        "head_sha": head_sha,
+        "base_sha": base_sha,
+        "clone_url": clone_url,
+        "installation_id": installation_id,
+        "event": event_type,
+        "action": action,
+        "received_at": datetime.now(timezone.utc).isoformat(),
+    }
+    status = enqueue_review_event(event)
+
+    if status == "queued":
+        if _PROM_AVAILABLE:
+            WEBHOOK_QUEUED.labels(repo=repo_full_name).inc()
+        logger.info(
+            "Enqueued review job for %s PR #%d (head: %s)",
+            repo_full_name,
+            pr_number,
+            head_sha[:7],
+        )
+        return {"status": "received"}
+
+    if status == "deduplicated":
         logger.info(
             "Dedup: review already in progress/completed for %s PR #%d (head: %s)",
             repo_full_name,
@@ -259,36 +303,64 @@ async def github_webhook(request: Request) -> Response:
             WEBHOOK_DUPES.inc()
         return {"status": "deduplicated"}
 
-    # Enqueue the review job for background processing
-    try:
-        queue = get_queue()
-        queue.enqueue(
-            run_review_job,
-            repo_full_name,
-            pr_number,
-            head_sha,
-            base_sha,
-            clone_url,
-            installation_id,
-        )
+    if status == "retrying":
+        # The event is safe — it will be retried with backoff by the worker.
         if _PROM_AVAILABLE:
-            WEBHOOK_QUEUED.labels(repo=repo_full_name).inc()
-        logger.info(
-            "Enqueued review job for %s PR #%d (head: %s)",
+            WEBHOOK_RETRY_SCHEDULED.labels(repo=repo_full_name).inc()
+        logger.warning(
+            "Queue unavailable — %s PR #%d persisted to retry queue (head: %s)",
             repo_full_name,
             pr_number,
             head_sha[:7],
         )
-    except (OSError, ValueError) as e:
-        logger.error(
-            "Failed to enqueue review job for %s PR #%d: %s",
-            repo_full_name,
-            pr_number,
-            e,
-        )
-        return {"status": "error", "detail": "queue_failed"}
+        return {"status": "received", "detail": "queued_for_retry"}
 
-    return {"status": "received"}
+    # Nothing was persisted — signal failure so GitHub retries the webhook.
+    if _PROM_AVAILABLE:
+        WEBHOOK_ENQUEUE_FAILED.labels(repo=repo_full_name).inc()
+    logger.error(
+        "Queue unavailable and retry persistence failed for %s PR #%d — dropping event",
+        repo_full_name,
+        pr_number,
+    )
+    raise HTTPException(status_code=503, detail="queue_unavailable")
+
+
+# ── Webhook retry / DLQ admin API ──────────────────────────────────────
+# Requires AEGIS_API_KEY when configured (see verify_api_key).
+
+
+@v1_router.get("/webhooks/dlq", dependencies=[Depends(verify_api_key)])
+async def list_dead_letters(limit: int = 100) -> dict[str, Any]:
+    """List dead-lettered webhook events for inspection."""
+    items = list_dlq(limit=limit)
+    return {"count": len(items), "items": items}
+
+
+@v1_router.post("/webhooks/dlq/replay", dependencies=[Depends(verify_api_key)])
+async def replay_dead_letters(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Re-enqueue dead-lettered webhook events.
+
+    Optional body: {"indexes": [0, 2]} to replay specific entries (positions
+    from GET /api/v1/webhooks/dlq). Omitting the body replays all.
+    """
+    indexes = payload.get("indexes") if payload else None
+    replayed = replay_dlq(indexes=indexes)
+    if _PROM_AVAILABLE:
+        WEBHOOK_REPLAYED.inc(replayed)
+    return {"replayed": replayed}
+
+
+@v1_router.delete("/webhooks/dlq", dependencies=[Depends(verify_api_key)])
+async def clear_dead_letters() -> dict[str, Any]:
+    """Remove all dead-lettered webhook events (irreversible)."""
+    return {"removed": clear_dlq()}
+
+
+@v1_router.get("/webhooks/queue/stats", dependencies=[Depends(verify_api_key)])
+async def queue_stats() -> dict[str, Any]:
+    """Queue health: retry backlog, DLQ size, review queue depth/failures."""
+    return get_retry_stats()
 
 
 @app.get("/metrics")
