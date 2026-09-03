@@ -30,10 +30,12 @@ EVENT = {
 
 
 class FakeRedis:
-    """Minimal Redis stand-in supporting the list ops the DLQ uses."""
+    """Minimal Redis stand-in supporting the list/hash/counter ops used here."""
 
     def __init__(self) -> None:
         self.lists: dict[str, list[str]] = {}
+        self.counters: dict[str, int] = {}
+        self.hashes: dict[str, dict[str, str]] = {}
 
     def rpush(self, key: str, value: str) -> int:
         self.lists.setdefault(key, []).append(value)
@@ -57,9 +59,30 @@ class FakeRedis:
         return removed
 
     def delete(self, key: str) -> int:
+        removed = 0
         if self.lists.pop(key, None) is not None:
-            return 1
-        return 0
+            removed += 1
+        if self.counters.pop(key, None) is not None:
+            removed += 1
+        if self.hashes.pop(key, None) is not None:
+            removed += 1
+        return removed
+
+    def incr(self, key: str, amount: int = 1) -> int:
+        self.counters[key] = self.counters.get(key, 0) + amount
+        return self.counters[key]
+
+    def get(self, key: str) -> str | None:
+        val = self.counters.get(key)
+        return str(val) if val is not None else None
+
+    def hincrby(self, key: str, field: str, amount: int) -> int:
+        h = self.hashes.setdefault(key, {})
+        h[field] = str(int(h.get(field, 0)) + amount)
+        return int(h[field])
+
+    def hgetall(self, key: str) -> dict[str, str]:
+        return dict(self.hashes.get(key, {}))
 
 
 @pytest.fixture
@@ -275,6 +298,87 @@ def test_clear_dlq(fake_redis: FakeRedis) -> None:
         assert wr.list_dlq() == []
 
 
+# ── Dead-letter counters & alerting ───────────────────────────────────
+
+
+def test_move_to_dlq_bumps_counters(fake_redis: FakeRedis) -> None:
+    with patch.object(wr, "get_redis", return_value=fake_redis):
+        wr.move_to_dlq(EVENT, error="boom", attempts=5)
+        wr.move_to_dlq(EVENT, error="boom", attempts=5)
+        assert fake_redis.counters[wr.DLQ_MOVES_KEY] == 2
+        assert fake_redis.hashes[wr.DLQ_MOVES_BY_REPO_KEY]["owner/repo"] == "2"
+
+
+def test_get_dlq_metrics(fake_redis: FakeRedis) -> None:
+    with patch.object(wr, "get_redis", return_value=fake_redis):
+        wr.move_to_dlq(EVENT, error="boom", attempts=5)
+        metrics = wr.get_dlq_metrics()
+    assert metrics["dead_letter_moves_total"] == 1
+    assert metrics["dead_letter_current"] == 1
+    assert metrics["dead_letter_by_repo"] == {"owner/repo": 1}
+
+
+def test_get_retry_stats_includes_dlq_moves(fake_redis: FakeRedis) -> None:
+    retry_queue = MagicMock()
+    retry_queue.count = 2
+    default_queue = MagicMock()
+    default_queue.count = 1
+    default_queue.failed_job_registry.count = 3
+    with (
+        patch.object(wr, "get_redis", return_value=fake_redis),
+        patch.object(wr, "Queue", side_effect=[retry_queue, default_queue]),
+    ):
+        wr.move_to_dlq(EVENT, error="e1", attempts=5)
+        stats = wr.get_retry_stats()
+    assert stats["dead_letter_moves_total"] == 1
+    assert stats["dead_letter_count"] == 1
+
+
+def test_notify_dead_letter_sends_slack_payload(fake_redis: FakeRedis) -> None:
+    with patch.object(
+        wr, "settings", SimpleNamespace(alert_webhook_url="https://hooks.slack.com/services/AAA/BBB")
+    ):
+        with (
+            patch.object(wr, "get_redis", return_value=fake_redis),
+            patch.object(wr.httpx, "post") as post,
+        ):
+            entry_id = wr.move_to_dlq(EVENT, error="boom", attempts=5)
+    assert post.call_count == 1
+    url, kwargs = post.call_args
+    assert url[0] == "https://hooks.slack.com/services/AAA/BBB"
+    payload = kwargs["json"]
+    assert "owner/repo" in payload["text"]
+    assert "#42" in payload["text"]
+    assert "replay" in payload["text"].lower()
+    assert kwargs["timeout"] == 3.0
+    assert entry_id
+
+
+def test_notify_dead_letter_noop_without_webhook(fake_redis: FakeRedis) -> None:
+    with patch.object(wr, "settings", SimpleNamespace(alert_webhook_url="")):
+        with (
+            patch.object(wr, "get_redis", return_value=fake_redis),
+            patch.object(wr.httpx, "post") as post,
+        ):
+            wr.move_to_dlq(EVENT, error="boom", attempts=5)
+    post.assert_not_called()
+
+
+def test_notify_dead_letter_never_raises(fake_redis: FakeRedis) -> None:
+    with patch.object(
+        wr, "settings", SimpleNamespace(alert_webhook_url="https://hooks.slack.com/AAA")
+    ):
+        with (
+            patch.object(wr, "get_redis", return_value=fake_redis),
+            patch.object(wr.httpx, "post", side_effect=TimeoutError("webhook down")),
+        ):
+            entry_id = wr.move_to_dlq(EVENT, error="boom", attempts=5)  # must not raise
+    assert entry_id
+
+
+# ── Admin API endpoints ───────────────────────────────────────────────
+
+
 def test_get_retry_stats(fake_redis: FakeRedis) -> None:
     retry_queue = MagicMock()
     retry_queue.count = 2
@@ -289,6 +393,7 @@ def test_get_retry_stats(fake_redis: FakeRedis) -> None:
         stats = wr.get_retry_stats()
     assert stats == {
         "dead_letter_count": 1,
+        "dead_letter_moves_total": 1,
         "retry_queue_pending": 2,
         "review_queue_pending": 1,
         "review_queue_failed": 3,
@@ -334,6 +439,27 @@ def test_dlq_endpoints(client: TestClient) -> None:
         resp = client.get("/api/v1/webhooks/queue/stats")
         assert resp.status_code == 200
         assert resp.json()["dead_letter_count"] == 1
+
+
+def test_metrics_exposes_dlq_gauges(client: TestClient) -> None:
+    from app import main as app_main
+
+    if not app_main._PROM_AVAILABLE:
+        pytest.skip("prometheus_client not installed")
+    with patch(
+        "app.main.get_dlq_metrics",
+        return_value={
+            "dead_letter_moves_total": 3,
+            "dead_letter_current": 2,
+            "dead_letter_by_repo": {"owner/repo": 3},
+        },
+    ):
+        resp = client.get("/metrics")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "aegisai_webhook_dead_lettered_total 3.0" in body
+    assert "aegisai_webhook_dlq_current 2.0" in body
+    assert 'aegisai_webhook_dead_lettered_by_repo_total{repo="owner/repo"} 3.0' in body
 
 
 def test_webhook_failure_returns_503(client: TestClient) -> None:

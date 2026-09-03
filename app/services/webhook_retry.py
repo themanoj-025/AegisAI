@@ -32,6 +32,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+import httpx
 from rq import Queue, Retry, get_current_job
 
 from app.config import settings
@@ -40,8 +41,13 @@ from app.workers.review_worker import run_review_job
 
 logger = logging.getLogger("aegisai")
 
-# Redis key for the dead-letter queue (a list of JSON entries)
+# Redis keys for the dead-letter queue (a list of JSON entries)
 DLQ_KEY = "webhook:dlq"
+
+# Redis-backed counters — incremented in the worker where DLQ moves happen,
+# read by the API process for /metrics and the stats endpoint.
+DLQ_MOVES_KEY = "webhook:dlq:moves_total"  # integer counter
+DLQ_MOVES_BY_REPO_KEY = "webhook:dlq:moves_by_repo"  # hash: repo -> count
 
 # Event statuses returned by enqueue_review_event / _enqueue_review_once
 STATUS_QUEUED = "queued"
@@ -190,8 +196,45 @@ def retry_webhook_enqueue(event: dict[str, Any]) -> None:
 # ── Dead-letter queue ──────────────────────────────────────────────────
 
 
+def _notify_dead_letter(entry: dict[str, Any]) -> None:
+    """Best-effort ops notification for a dead-lettered event.
+
+    POSTs a Slack-compatible payload to settings.alert_webhook_url. Never
+    raises: alerting must not fail the retry job or lose the DLQ entry.
+    """
+    url = settings.alert_webhook_url
+    if not url:
+        return
+    event = entry["event"]
+    try:
+        resp = httpx.post(
+            url,
+            json={
+                "text": (
+                    f"⚠️ *AegisAI: webhook event dead-lettered*\n"
+                    f"repo: `{event['repo']}`\n"
+                    f"PR: #{event['pr_number']} (head `{event['head_sha'][:7]}`)\n"
+                    f"attempts: {entry['attempts']}\n"
+                    f"error: {entry['error']}\n"
+                    f"dead-lettered at: {entry['dead_lettered_at']}\n"
+                    f"Replay: POST /api/v1/webhooks/dlq/replay"
+                ),
+                "mrkdwn": True,
+            },
+            timeout=3.0,
+        )
+        logger.info("DLQ alert sent (status=%s)", resp.status_code)
+    except Exception as e:
+        logger.warning("Failed to send DLQ alert to ops webhook: %s", e)
+
+
 def move_to_dlq(event: dict[str, Any], error: str, attempts: int) -> str:
-    """Append an event to the dead-letter queue for manual inspection/replay."""
+    """Append an event to the dead-letter queue for manual inspection/replay.
+
+    Also bumps the Redis-backed dead-letter counters (shared between the
+    worker, which moves events here, and the API process, which exposes
+    them via /metrics) and fires the ops alert webhook if configured.
+    """
     entry = {
         "id": f"{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}",
         "event": event,
@@ -199,13 +242,17 @@ def move_to_dlq(event: dict[str, Any], error: str, attempts: int) -> str:
         "attempts": attempts,
         "dead_lettered_at": datetime.now(timezone.utc).isoformat(),
     }
-    get_redis().rpush(DLQ_KEY, json.dumps(entry))
+    redis_client = get_redis()
+    redis_client.rpush(DLQ_KEY, json.dumps(entry))
+    redis_client.incr(DLQ_MOVES_KEY)
+    redis_client.hincrby(DLQ_MOVES_BY_REPO_KEY, event["repo"], 1)
     logger.error(
         "Webhook event dead-lettered: repo=%s pr=%d error=%s",
         event["repo"],
         event["pr_number"],
         error,
     )
+    _notify_dead_letter(entry)
     return entry["id"]
 
 
@@ -267,6 +314,21 @@ def clear_dlq() -> int:
     return count
 
 
+def get_dlq_metrics() -> dict[str, Any]:
+    """Return dead-letter counters for Prometheus exposure.
+
+    These are Redis-backed so the worker (which performs DLQ moves) and the
+    API process (which serves /metrics) share the same numbers.
+    """
+    redis_client = get_redis()
+    by_repo = redis_client.hgetall(DLQ_MOVES_BY_REPO_KEY) or {}
+    return {
+        "dead_letter_moves_total": int(redis_client.get(DLQ_MOVES_KEY) or 0),
+        "dead_letter_current": redis_client.llen(DLQ_KEY),
+        "dead_letter_by_repo": {k: int(v) for k, v in by_repo.items()},
+    }
+
+
 def get_retry_stats() -> dict[str, Any]:
     """Return queue health stats for ops dashboards/admin API."""
     redis_client = get_redis()
@@ -274,6 +336,7 @@ def get_retry_stats() -> dict[str, Any]:
     default_queue = Queue(connection=redis_client)
     return {
         "dead_letter_count": redis_client.llen(DLQ_KEY),
+        "dead_letter_moves_total": int(redis_client.get(DLQ_MOVES_KEY) or 0),
         "retry_queue_pending": retry_queue.count,
         "review_queue_pending": default_queue.count,
         "review_queue_failed": default_queue.failed_job_registry.count,

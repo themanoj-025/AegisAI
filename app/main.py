@@ -24,13 +24,14 @@ from app.logging.structured_logging import set_request_id, setup_logger
 from app.services.webhook_retry import (
     clear_dlq,
     enqueue_review_event,
+    get_dlq_metrics,
     get_retry_stats,
     list_dlq,
     replay_dlq,
 )
 
 try:
-    from prometheus_client import Counter, Histogram, generate_latest
+    from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
     _PROM_AVAILABLE = True
 except ImportError:
@@ -65,6 +66,21 @@ if _PROM_AVAILABLE:
     WEBHOOK_ENQUEUE_FAILED = Counter(
         "aegisai_webhook_enqueue_failed_total",
         "Webhook events that could not be enqueued or persisted",
+        ["repo"],
+    )
+    # DLQ gauges are set from Redis-backed counters right before a scrape,
+    # because DLQ moves happen in the worker process (see get_dlq_metrics).
+    DLQ_MOVES_TOTAL = Gauge(
+        "aegisai_webhook_dead_lettered_total",
+        "Webhook events moved to the dead-letter queue (worker-shared counter)",
+    )
+    DLQ_CURRENT = Gauge(
+        "aegisai_webhook_dlq_current",
+        "Webhook events currently in the dead-letter queue",
+    )
+    DLQ_BY_REPO = Gauge(
+        "aegisai_webhook_dead_lettered_by_repo_total",
+        "Dead-lettered webhook events by repository",
         ["repo"],
     )
     WEBHOOK_REPLAYED = Counter(
@@ -364,10 +380,18 @@ async def queue_stats() -> dict[str, Any]:
 
 
 @app.get("/metrics")
-async def metrics() -> dict[str, Any]:
+async def metrics():
     """Prometheus metrics endpoint."""
     if not _PROM_AVAILABLE:
         return {"status": "prometheus_client not installed"}
+    try:
+        dlq = get_dlq_metrics()
+        DLQ_MOVES_TOTAL.set(dlq["dead_letter_moves_total"])
+        DLQ_CURRENT.set(dlq["dead_letter_current"])
+        for repo, count in dlq["dead_letter_by_repo"].items():
+            DLQ_BY_REPO.labels(repo=repo).set(count)
+    except Exception as e:
+        logger.warning("Failed to refresh DLQ metrics from Redis: %s", e)
     return Response(content=generate_latest(), media_type="text/plain")
 
 
