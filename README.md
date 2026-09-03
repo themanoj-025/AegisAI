@@ -284,6 +284,23 @@ curl -H "Authorization: Bearer $AEGIS_API_KEY" \
   http://localhost:8000/api/v1/webhooks/dlq
 ```
 
+### Dead-Letter Alerting & Metrics
+
+- **Ops alert** — set `ALERT_WEBHOOK_URL` to a Slack-compatible incoming
+  webhook; every dead-lettered event posts a notification with the repo,
+  PR, attempts, and error, plus a pointer to the replay endpoint.
+- **Prometheus** — DLQ moves happen in the worker process, so the metrics
+  are Redis-backed and exposed by the API process on `/metrics`:
+
+  | Metric | Meaning |
+  |--------|---------|
+  | `aegisai_webhook_dead_lettered_total` | Total dead-lettered events (all-time) |
+  | `aegisai_webhook_dlq_current` | Events currently sitting in the DLQ |
+  | `aegisai_webhook_dead_lettered_by_repo_total{repo=...}` | Dead-lettered events per repo |
+
+  Alert on `aegisai_webhook_dlq_current > 0` or a rising
+  `aegisai_webhook_dead_lettered_total` rate in your monitoring.
+
 ### Manual Test Checklist
 
 1. **Test PR with vulnerabilities:**
