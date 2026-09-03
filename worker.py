@@ -24,15 +24,19 @@ logger.addHandler(handler)
 
 
 def main() -> None:
-    """Start the RQ worker, listening on the default queue."""
+    """Start the RQ worker, listening on the default and retry queues."""
     logger.info("Starting AegisAI worker...")
     logger.info("Redis URL: %s", settings.redis_url)
 
+    from app.services.webhook_retry import retry_webhook_enqueue
     from app.workers.review_worker import run_review_job
 
-    _ = run_review_job  # register the job function with RQ
+    _ = run_review_job        # register the review job function with RQ
+    _ = retry_webhook_enqueue  # register the webhook retry job function with RQ
 
-    worker = Worker(["default"], connection=redis.Redis.from_url(settings.redis_url))
+    queues = ["default", settings.webhook_retry_queue]
+    logger.info("Listening on queues: %s", ", ".join(queues))
+    worker = Worker(queues, connection=redis.Redis.from_url(settings.redis_url))
     worker.work()
 
 

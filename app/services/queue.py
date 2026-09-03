@@ -52,3 +52,13 @@ def acquire_review_lock(repo_full_name: str, head_sha: str, ttl: int = 600) -> b
         redis_client.expire(key, ttl)
         return True
     return False
+
+
+def release_review_lock(repo_full_name: str, head_sha: str) -> None:
+    """Release a deduplication lock, allowing the event to be retried.
+
+    Called when enqueuing a review job fails, so a later retry attempt can
+    re-acquire the lock instead of being treated as a duplicate.
+    """
+    key = f"review_lock:{repo_full_name}:{head_sha}"
+    get_redis().delete(key)

@@ -55,7 +55,7 @@ I built AegisAI because I was tired of waiting for human code reviews to catch s
 
 - **Context Window Limits:** Very large pull requests (e.g., framework upgrades or mass refactors) can exceed the LLM's context window or cause it to lose track of subtle cross-file vulnerabilities.
 - **False Positives in Tests:** The agent occasionally flags intentionally vulnerable code in test files as a true vulnerability, requiring manual "ignore" comments.
-- **Webhook Redundancy:** The current FastAPI webhook receiver is a single instance; if it goes down during a GitHub event delivery, that PR review is dropped unless manually re-triggered.
+- **Webhook Redundancy (mitigated):** If the queue is temporarily unavailable when a webhook arrives, the event is persisted to a retry queue with exponential backoff and dead-letter handling (see [Webhook Reliability](#-webhook-reliability)) instead of being dropped. If the receiver process itself is down, GitHub still retries the webhook natively.
 
 ---
 
@@ -252,6 +252,37 @@ AegisAI/
 ---
 
 ## 🧪 Testing
+
+## 🔁 Webhook Reliability
+
+Webhook events are never silently dropped when the queue is unavailable:
+
+1. **Normal path** — the review job is enqueued on the default RQ queue.
+2. **Queue blip** — the event is persisted to the `webhook-retry` RQ queue and
+   retried with exponential backoff (`WEBHOOK_RETRY_BACKOFF`, default
+   `60,300,900,1800`s) up to `WEBHOOK_RETRY_MAX_ATTEMPTS` times.
+3. **Dead-letter** — events that exhaust all attempts land in the Redis DLQ
+   (`webhook:dlq`) for inspection and manual replay.
+4. **Last resort** — if even retry persistence fails, the webhook endpoint
+   returns `503`, so GitHub retries the delivery itself.
+
+Review jobs that fail transiently at runtime (LLM timeouts, GitHub API
+blips) are also retried by RQ (`REVIEW_JOB_MAX_RETRIES`, default 3) before
+being marked failed.
+
+### Dead-Letter Admin API (requires `AEGIS_API_KEY` when set)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/webhooks/dlq` | List dead-lettered events |
+| POST | `/api/v1/webhooks/dlq/replay` | Re-enqueue all (or `{"indexes": [0, 2]}`) dead-lettered events |
+| DELETE | `/api/v1/webhooks/dlq` | Clear the DLQ |
+| GET | `/api/v1/webhooks/queue/stats` | Retry backlog, DLQ size, review queue depth/failures |
+
+```bash
+curl -H "Authorization: Bearer $AEGIS_API_KEY" \
+  http://localhost:8000/api/v1/webhooks/dlq
+```
 
 ### Manual Test Checklist
 
