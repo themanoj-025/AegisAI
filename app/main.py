@@ -20,7 +20,9 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from app.config import settings
+from app.health import create_health_router
 from app.logging.structured_logging import set_request_id, setup_logger
+from app.services.queue import get_redis
 from app.services.webhook_retry import (
     clear_dlq,
     enqueue_review_event,
@@ -398,7 +400,8 @@ async def metrics():
 app.include_router(v1_router)
 
 
-@app.get("/health")
-async def root_health_check() -> dict[str, Any]:
-    """Root health check for Docker probes (backward compat)."""
-    return {"status": "ok"}
+# Root health probes served by the canonical shared health module
+# (app/health.py is synced from shared/aegis_common/health.py):
+#   GET /health        — liveness (Docker/k8s probes), always 200
+#   GET /health/ready  — readiness, 200 only when Redis is reachable
+app.include_router(create_health_router(checks={"redis": lambda: get_redis().ping()}))
