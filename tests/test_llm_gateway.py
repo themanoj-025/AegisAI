@@ -1,5 +1,7 @@
 """Tests for LLM Gateway abstraction layer."""
 
+from unittest.mock import patch
+
 import pytest
 
 from app.services.llm_gateway import _get_provider, _is_retryable, _RetryableError
@@ -31,7 +33,8 @@ class TestGetProvider:
         import app.services.llm_gateway as mod
 
         mod._provider = None
-        with patch.object(mod.settings, "llm_provider", "unknown"):
+        with patch("app.services.llm_gateway.settings") as mock_settings:
+            mock_settings.llm_provider = "unknown"
             with pytest.raises(ValueError, match="Unknown LLM_PROVIDER"):
                 _get_provider()
 
