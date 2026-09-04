@@ -1,36 +1,68 @@
-"""Tests for job queue service."""
+"""Tests for the Redis queue / review-lock helpers."""
 
 
-from app.services.queue import JobQueue
+class _FakeRedis:
+    """Minimal redis.Redis stand-in supporting the lock ops used by queue.py."""
+
+    def __init__(self) -> None:
+        self._data: dict[str, str] = {}
+
+    def setnx(self, key: str, value: str) -> bool:
+        if key in self._data:
+            return False
+        self._data[key] = value
+        return True
+
+    def expire(self, key: str, ttl: int) -> bool:
+        return key in self._data
+
+    def delete(self, key: str) -> int:
+        return 1 if self._data.pop(key, None) is not None else 0
+
+    def ping(self) -> bool:
+        return True
 
 
-class TestJobQueue:
-    """Tests for the in-process job queue."""
+class TestReviewLock:
+    def test_acquire_returns_true_first_time(self, monkeypatch) -> None:
+        fake = _FakeRedis()
+        monkeypatch.setattr("app.services.queue.get_redis", lambda: fake)
+        from app.services.queue import acquire_review_lock
 
-    def test_enqueue_and_dequeue(self) -> None:
-        jq = JobQueue()
-        jq.enqueue({"type": "review", "repo": "owner/repo"})
-        job = jq.dequeue()
-        assert job is not None
-        assert job["type"] == "review"
+        assert acquire_review_lock("owner/repo", "abc123") is True
 
-    def test_empty_queue_returns_none(self) -> None:
-        jq = JobQueue()
-        assert jq.dequeue() is None
+    def test_duplicate_acquire_returns_false(self, monkeypatch) -> None:
+        fake = _FakeRedis()
+        monkeypatch.setattr("app.services.queue.get_redis", lambda: fake)
+        from app.services.queue import acquire_review_lock
 
-    def test_fifo_order(self) -> None:
-        jq = JobQueue()
-        jq.enqueue({"id": 1})
-        jq.enqueue({"id": 2})
-        jq.enqueue({"id": 3})
-        assert jq.dequeue()["id"] == 1
-        assert jq.dequeue()["id"] == 2
-        assert jq.dequeue()["id"] == 3
+        assert acquire_review_lock("owner/repo", "abc123") is True
+        assert acquire_review_lock("owner/repo", "abc123") is False
 
-    def test_queue_size(self) -> None:
-        jq = JobQueue()
-        assert jq.size() == 0
-        jq.enqueue({"id": 1})
-        assert jq.size() == 1
-        jq.dequeue()
-        assert jq.size() == 0
+    def test_lock_key_isolation_between_prs(self, monkeypatch) -> None:
+        fake = _FakeRedis()
+        monkeypatch.setattr("app.services.queue.get_redis", lambda: fake)
+        from app.services.queue import acquire_review_lock
+
+        assert acquire_review_lock("owner/repo", "sha1") is True
+        assert acquire_review_lock("owner/repo", "sha2") is True
+
+    def test_release_allows_reacquire(self, monkeypatch) -> None:
+        fake = _FakeRedis()
+        monkeypatch.setattr("app.services.queue.get_redis", lambda: fake)
+        from app.services.queue import acquire_review_lock, release_review_lock
+
+        assert acquire_review_lock("owner/repo", "abc123") is True
+        release_review_lock("owner/repo", "abc123")
+        assert acquire_review_lock("owner/repo", "abc123") is True
+
+
+class TestGetQueue:
+    def test_returns_rq_queue_with_connection(self, monkeypatch) -> None:
+        fake = _FakeRedis()
+        monkeypatch.setattr("app.services.queue.get_redis", lambda: fake)
+        from app.services.queue import get_queue
+
+        queue = get_queue()
+        assert queue is not None
+        assert queue.connection is fake
