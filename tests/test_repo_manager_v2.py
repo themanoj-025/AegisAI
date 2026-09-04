@@ -1,5 +1,6 @@
 """Tests for repo manager (clone logic)."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -22,7 +23,7 @@ class TestClonePrRepo:
             MagicMock(returncode=0, stderr=""),  # checkout
         ]
         with patch("app.services.repo_manager.Path.mkdir"):
-            with patch("app.services.repo_manager.Path.resolve", return_value="/tmp/test"):
+            with patch("app.services.repo_manager.Path.resolve", return_value=Path("/tmp/test")):
                 result = clone_pr_repo(
                     clone_url="https://github.com/owner/repo.git",
                     installation_token="ghp_test",
@@ -36,7 +37,7 @@ class TestClonePrRepo:
     def test_clone_failure_raises(self, mock_run) -> None:
         mock_run.return_value = MagicMock(returncode=1, stderr="fatal: repository not found")
         with patch("app.services.repo_manager.Path.mkdir"):
-            with patch("app.services.repo_manager.Path.resolve", return_value="/tmp/test"):
+            with patch("app.services.repo_manager.Path.resolve", return_value=Path("/tmp/test")):
                 with pytest.raises(RuntimeError, match="Git clone failed"):
                     clone_pr_repo(
                         clone_url="https://github.com/owner/repo.git",
@@ -53,7 +54,7 @@ class TestClonePrRepo:
             MagicMock(returncode=1, stderr="fatal: bad object abc123"),  # checkout fails
         ]
         with patch("app.services.repo_manager.Path.mkdir"):
-            with patch("app.services.repo_manager.Path.resolve", return_value="/tmp/test"):
+            with patch("app.services.repo_manager.Path.resolve", return_value=Path("/tmp/test")):
                 with pytest.raises(RuntimeError, match="checkout.*failed"):
                     clone_pr_repo(
                         clone_url="https://github.com/owner/repo.git",
