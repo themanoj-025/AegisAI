@@ -8,7 +8,7 @@ is active.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
@@ -83,7 +83,9 @@ class _AnthropicProvider(_LLMProvider):
                 getattr(usage, "output_tokens", "unknown"),
             )
 
-        content = response.content[0].text
+        # .text is typed as Any upstream (anthropic SDK); cast pins the
+        # declared contract without changing runtime behavior.
+        content = cast(str, response.content[0].text)
         return content
 
 

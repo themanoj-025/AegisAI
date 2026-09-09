@@ -24,15 +24,18 @@ def setup_tracing(service_name: str) -> bool:
     try:
         from opentelemetry import trace
         from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter, SpanExporter
 
-        # Use OTLP exporter if configured, otherwise console
+        # Use OTLP exporter if configured, otherwise console. Typed as the
+        # common SpanExporter base: the two concrete exporters only share
+        # that interface, so a union variable would be rejected by mypy.
         otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        exporter: SpanExporter
         if otlp_endpoint:
             from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+
             exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
         else:
-            from opentelemetry.sdk.trace.export import ConsoleSpanExporter
             exporter = ConsoleSpanExporter()
 
         provider = TracerProvider()

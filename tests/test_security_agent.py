@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -24,7 +25,7 @@ class TestExtractJson:
     def test_json_in_code_fence(self) -> None:
         from app.agents.security_agent import _extract_json
 
-        data = {"findings": []}
+        data: dict[str, Any] = {"findings": []}
         text = f"```json\n{json.dumps(data)}\n```"
         result = _extract_json(text)
         assert result["findings"] == []
@@ -40,7 +41,7 @@ class TestExtractJson:
     def test_json_buried_in_text(self) -> None:
         from app.agents.security_agent import _extract_json
 
-        data = {"findings": []}
+        data: dict[str, Any] = {"findings": []}
         text = f"Here is the result: {json.dumps(data)} done."
         result = _extract_json(text)
         assert "findings" in result

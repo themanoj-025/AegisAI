@@ -30,7 +30,7 @@ import logging
 import time
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import httpx
 from rq import Queue, Retry, get_current_job
@@ -135,7 +135,9 @@ def persist_webhook_event(event: dict[str, Any]) -> str:
         retry_webhook_enqueue,
         event,
         job_timeout=60,
-        retry=Retry(max=settings.webhook_retry_max_attempts - 1, interval=_parse_backoff(settings.webhook_retry_backoff)),
+        retry=Retry(
+            max=settings.webhook_retry_max_attempts - 1, interval=_parse_backoff(settings.webhook_retry_backoff)
+        ),
         result_ttl=7 * 86400,
     )
     logger.warning(
@@ -144,7 +146,7 @@ def persist_webhook_event(event: dict[str, Any]) -> str:
         event["pr_number"],
         job.id,
     )
-    return job.id
+    return cast(str, job.id)
 
 
 def retry_webhook_enqueue(event: dict[str, Any]) -> None:
@@ -253,7 +255,7 @@ def move_to_dlq(event: dict[str, Any], error: str, attempts: int) -> str:
         error,
     )
     _notify_dead_letter(entry)
-    return entry["id"]
+    return cast(str, entry["id"])
 
 
 def list_dlq(limit: int = 100) -> list[dict[str, Any]]:
@@ -283,11 +285,7 @@ def replay_dlq(indexes: list[int] | None = None) -> int:
     Returns the number of entries replayed.
     """
     entries = list_dlq(limit=1000)
-    selected = (
-        [entries[i] for i in indexes if 0 <= i < len(entries)]
-        if indexes is not None
-        else entries
-    )
+    selected = [entries[i] for i in indexes if 0 <= i < len(entries)] if indexes is not None else entries
 
     replayed = 0
     for entry in selected:
@@ -311,7 +309,7 @@ def clear_dlq() -> int:
     count = redis_client.llen(DLQ_KEY)
     if count:
         redis_client.delete(DLQ_KEY)
-    return count
+    return cast(int, count)
 
 
 def get_dlq_metrics() -> dict[str, Any]:

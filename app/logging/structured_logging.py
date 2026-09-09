@@ -145,9 +145,11 @@ def setup_logger(
 
         def record_factory(*args: Any, **kwargs: Any) -> logging.LogRecord:
             record = old_factory(*args, **kwargs)
-            if not hasattr(record, "extra_fields"):
-                record.extra_fields = {}
-            record.extra_fields.update(context)
+            # Stash per-logger context on the record via a typed attribute
+            # (LogRecord allows dynamic attrs at runtime; declared for mypy).
+            fields: dict[str, Any] = getattr(record, "extra_fields", {})
+            fields.update(context)
+            record.extra_fields = fields
             return record
 
         logging.setLogRecordFactory(record_factory)
