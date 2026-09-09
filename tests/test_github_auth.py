@@ -58,7 +58,7 @@ class TestGetInstallationToken:
         assert 123 in auth._token_cache
 
         # Second call must reuse the cache (no new HTTP request)
-        auth.httpx.Client = Mock(side_effect=AssertionError("should not call HTTP"))
+        monkeypatch.setattr(auth.httpx, "Client", Mock(side_effect=AssertionError("should not call HTTP")))
         assert auth.get_installation_token(123) == "inst-token"
 
     def test_401_raises_permission_error(self, monkeypatch) -> None:

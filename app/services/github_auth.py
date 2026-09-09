@@ -7,6 +7,7 @@ for short-lived installation access tokens.
 import logging
 import time
 from pathlib import Path
+from typing import cast
 
 import httpx
 from jwt import PyJWTError
@@ -51,7 +52,9 @@ def _generate_jwt() -> str:
     }
 
     try:
-        token = jwt.encode(payload, private_key, algorithm="RS256")
+        # jwt.encode is untyped upstream (returns Any); cast pins the
+        # declared str contract without changing runtime behavior.
+        token = cast(str, jwt.encode(payload, private_key, algorithm="RS256"))
         return token
     except PyJWTError as e:
         raise RuntimeError(f"Failed to generate JWT: {e}") from e

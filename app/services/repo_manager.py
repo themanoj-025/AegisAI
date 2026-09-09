@@ -121,7 +121,7 @@ def clone_pr_repo(
         raise
 
 
-def cleanup_workspace(path: str) -> None:
+def cleanup_workspace(path: str | None = None) -> None:
     """Recursively delete a workspace directory after review is complete."""
     if not path or not os.path.exists(path):
         return

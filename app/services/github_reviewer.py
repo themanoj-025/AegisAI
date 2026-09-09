@@ -7,7 +7,7 @@ inline comments where possible, and a summary comment at the top.
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -252,7 +252,9 @@ def post_review(
                 f"GitHub review API failed (HTTP {fallback_response.status_code}) "
                 f"for {repo_full_name} PR #{pr_number}: {fallback_response.text}"
             )
-        return fallback_response.json()
+        # .json() returns Any upstream (httpx); cast pins the declared
+        # dict contract without changing runtime behavior.
+        return cast("dict[str, Any]", fallback_response.json())
 
     if response.status_code not in (200, 201):
         raise RuntimeError(
@@ -260,7 +262,7 @@ def post_review(
             f"for {repo_full_name} PR #{pr_number}: {response.text}"
         )
 
-    result = response.json()
+    result = cast("dict[str, Any]", response.json())
     review_id = result.get("id", "unknown")
     logger.info(
         "Successfully posted review (ID: %s) to %s PR #%d",
