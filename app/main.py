@@ -8,7 +8,8 @@ import hashlib
 import hmac
 import json
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -295,7 +296,7 @@ async def github_webhook(request: Request) -> Response:
         "installation_id": installation_id,
         "event": event_type,
         "action": action,
-        "received_at": datetime.now(timezone.utc).isoformat(),
+        "received_at": datetime.now(UTC).isoformat(),
     }
     status = enqueue_review_event(event)
 

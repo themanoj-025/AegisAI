@@ -1,6 +1,6 @@
 """Tests for GitHub App installation-token service."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -36,7 +36,7 @@ class _FakeClient:
 
 
 def _expires_in(minutes: int = 60) -> str:
-    dt = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+    dt = datetime.now(UTC) + timedelta(minutes=minutes)
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
