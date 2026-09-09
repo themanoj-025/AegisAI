@@ -29,7 +29,7 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -240,7 +240,7 @@ def move_to_dlq(event: dict[str, Any], error: str, attempts: int) -> str:
         "event": event,
         "error": error[:500],
         "attempts": attempts,
-        "dead_lettered_at": datetime.now(timezone.utc).isoformat(),
+        "dead_lettered_at": datetime.now(UTC).isoformat(),
     }
     redis_client = get_redis()
     redis_client.rpush(DLQ_KEY, json.dumps(entry))
