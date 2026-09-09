@@ -29,7 +29,6 @@ ignore = [
     "B904",    # raise-without-from — legacy code
     "T001",    # print found — intentional in scripts (now FIX001)
     "B025",    # duplicate exception — intentional defensive coding
-    "F821",    # undefined name — pre-existing missing imports
     "FIX001",  # fixme/todo comments — intentional
     "SIM102",  # collapsible if — circuit breaker pattern
     "RUF043",  # comparison to literal
