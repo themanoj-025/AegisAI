@@ -8,6 +8,7 @@ findings with a lightweight hallucination guard.
 import json
 import logging
 import re
+from typing import Any, cast
 
 from app.services.llm_gateway import call_llm
 from app.services.secrets_redactor import redact_secrets
@@ -54,12 +55,12 @@ Respond with valid JSON matching this exact schema:
 IMPORTANT: Respond with ONLY the JSON. No surrounding text, no markdown formatting."""
 
 
-def _extract_json(text: str) -> dict:
+def _extract_json(text: str) -> dict[str, Any]:
     """Parse JSON from LLM response, handling common formatting issues."""
-    # Try direct parse first
+    # json.loads returns Any; cast pins the dict contract at each path.
     text = text.strip()
     try:
-        return json.loads(text)
+        return cast(dict[str, Any], json.loads(text))
     except json.JSONDecodeError:
         pass
 
@@ -67,7 +68,7 @@ def _extract_json(text: str) -> dict:
     json_match = re.search(r"```(?:json)?\s*\n?([\s\S]*?)\n?```", text)
     if json_match:
         try:
-            return json.loads(json_match.group(1))
+            return cast(dict[str, Any], json.loads(json_match.group(1)))
         except json.JSONDecodeError:
             pass
 
@@ -75,7 +76,7 @@ def _extract_json(text: str) -> dict:
     json_match = re.search(r"\{[\s\S]*\}", text)
     if json_match:
         try:
-            return json.loads(json_match.group(0))
+            return cast(dict[str, Any], json.loads(json_match.group(0)))
         except json.JSONDecodeError:
             pass
 
@@ -110,7 +111,7 @@ def _batch_files(files: list[dict]) -> list[list[dict]]:
 
     batches = []
     # Batch small files together (up to 5 per batch or ~200 lines)
-    current_batch = []
+    current_batch: list[dict[str, Any]] = []
     current_lines = 0
     for f in small_files:
         flines = f["diff_text"].count("\n")

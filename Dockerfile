@@ -49,10 +49,10 @@ RUN pip install --upgrade pip && \
     # the CI trivy gate (jaraco.context CVE-2026-23949, wheel CVE-2026-24049,
     # setuptools CVE-2025-47273, msgpack GHSA-6v7p-g79w-8964).
     pip install --no-cache-dir --upgrade \
-        "jaraco-context>=6.1.0" \
-        "wheel>=0.46.2" \
-        "setuptools>=78.1.1" \
-        "msgpack>=1.2.1"
+        "jaraco-context==6.1.0" \
+        "wheel==0.46.2" \
+        "setuptools==78.1.1" \
+        "msgpack==1.2.1"
 
 # ── API stage: FastAPI webhook receiver ───────────────────────────────
 FROM deps AS api
@@ -71,7 +71,7 @@ EXPOSE 8000
 
 # /health is served by FastAPI (app/main.py)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fsS http://localhost:8000/health || exit 1
+    CMD ["curl", "-fsS", "http://localhost:8000/health"]
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -96,7 +96,10 @@ FROM deps AS dev
 
 # flake8 (lint) is used by make lint inside the dev container; pytest
 # comes from the base deps requirements but is pinned here for clarity.
-RUN pip install --no-cache-dir flake8 pytest pytest-cov
+RUN pip install --no-cache-dir \
+        "flake8==7.3.0" \
+        "pytest==9.1.1" \
+        "pytest-cov==7.1.0"
 
 RUN useradd --create-home --uid 10001 aegisai && \
     mkdir -p /app/workspace && \
