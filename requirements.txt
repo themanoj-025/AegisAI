@@ -3,7 +3,7 @@ uvicorn[standard]>=0.52.4
 pydantic-settings>=2.6.0
 python-dotenv>=1.2.3
 
-slowapi>=0.1.9,<0.2
+slowapi>=0.1.10,<0.2
 
 # Prompt 2 dependencies
 PyJWT[crypto]>=2.13.0
