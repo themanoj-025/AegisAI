@@ -10,8 +10,6 @@ pytestmark = pytest.mark.integration
 """Tests for repository cloning and workspace management."""
 
 
-
-
 class TestRandomSuffix:
     """Tests for _random_suffix."""
 

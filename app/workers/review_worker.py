@@ -43,9 +43,7 @@ def run_review_job(
         installation_token = get_installation_token(installation_id)
 
         # Step 2: Clone the repository
-        local_path = clone_pr_repo(
-            clone_url, installation_token, head_sha, pr_number, repo_full_name
-        )
+        local_path = clone_pr_repo(clone_url, installation_token, head_sha, pr_number, repo_full_name)
 
         # Step 3: Extract the diff
         logger.info("Extracting diff for %s PR #%d", repo_full_name, pr_number)

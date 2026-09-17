@@ -17,11 +17,7 @@ class TestRedactSecrets:
         assert "[REDACTED_SECRET]" in result
 
     def test_private_key_block(self) -> None:
-        text = (
-            "-----BEGIN RSA PRIVATE KEY-----\n"
-            "MIIEpAIBAAKCAQEA0...\n"
-            "-----END RSA PRIVATE KEY-----"
-        )
+        text = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA0...\n-----END RSA PRIVATE KEY-----"
         result = redact_secrets(text)
         assert "BEGIN RSA PRIVATE KEY" not in result
         assert "[REDACTED_SECRET]" in result
@@ -64,12 +60,7 @@ class TestRedactSecrets:
         assert result.count("[REDACTED_SECRET]") >= 2
 
     def test_mixed_content(self) -> None:
-        text = (
-            "# Normal comment\n"
-            "def hello():\n"
-            "    api_key = '1234567890abcdef1234'\n"
-            "    return 'ok'\n"
-        )
+        text = "# Normal comment\ndef hello():\n    api_key = '1234567890abcdef1234'\n    return 'ok'\n"
         result = redact_secrets(text)
         assert "def hello():" in result
         assert "return 'ok'" in result

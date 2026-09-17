@@ -9,7 +9,6 @@ from app.services.github_reviewer import _build_review_body, _map_hint_to_line, 
 pytestmark = pytest.mark.integration
 
 
-
 class TestBuildReviewBody:
     """Tests for _build_review_body."""
 
@@ -37,10 +36,42 @@ class TestBuildReviewBody:
 
     def test_mixed_severity_findings(self) -> None:
         findings = [
-            {"severity": "critical", "category": "a", "description": "d", "recommendation": "r", "file": "f", "line_hint": "l", "low_confidence": True},
-            {"severity": "high", "category": "b", "description": "d", "recommendation": "r", "file": "f", "line_hint": "l", "low_confidence": True},
-            {"severity": "medium", "category": "c", "description": "d", "recommendation": "r", "file": "f", "line_hint": "l", "low_confidence": True},
-            {"severity": "low", "category": "d", "description": "d", "recommendation": "r", "file": "f", "line_hint": "l", "low_confidence": True},
+            {
+                "severity": "critical",
+                "category": "a",
+                "description": "d",
+                "recommendation": "r",
+                "file": "f",
+                "line_hint": "l",
+                "low_confidence": True,
+            },
+            {
+                "severity": "high",
+                "category": "b",
+                "description": "d",
+                "recommendation": "r",
+                "file": "f",
+                "line_hint": "l",
+                "low_confidence": True,
+            },
+            {
+                "severity": "medium",
+                "category": "c",
+                "description": "d",
+                "recommendation": "r",
+                "file": "f",
+                "line_hint": "l",
+                "low_confidence": True,
+            },
+            {
+                "severity": "low",
+                "category": "d",
+                "description": "d",
+                "recommendation": "r",
+                "file": "f",
+                "line_hint": "l",
+                "low_confidence": True,
+            },
         ]
         result = _build_review_body(findings, [])
         assert "Critical: 1" in result["body"]
@@ -148,7 +179,17 @@ class TestPostReview:
             repo_full_name="owner/repo",
             pr_number=1,
             head_sha="abc123",
-            findings=[{"severity": "high", "category": "xss", "description": "d", "recommendation": "r", "file": "f", "line_hint": "l", "low_confidence": False}],
+            findings=[
+                {
+                    "severity": "high",
+                    "category": "xss",
+                    "description": "d",
+                    "recommendation": "r",
+                    "file": "f",
+                    "line_hint": "l",
+                    "low_confidence": False,
+                }
+            ],
             installation_token="ghp_test",
             diff_files=[{"filename": "f", "diff_text": "@@ -1 +1 @@\n+l"}],
         )

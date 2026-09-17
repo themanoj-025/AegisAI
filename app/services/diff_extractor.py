@@ -163,17 +163,13 @@ def get_pr_diff(repo_path: str, base_sha: str, head_sha: str) -> list[dict]:
             # Truncate the diff text
             truncated_lines = f["diff_text"].splitlines(keepends=True)
             f["diff_text"] = "".join(truncated_lines[:_MAX_DIFF_LINES_PER_FILE])
-            f["diff_text"] += (
-                f"\n# [TRUNCATED: diff was {lines} lines, "
-                f"showing first {_MAX_DIFF_LINES_PER_FILE}]\n"
-            )
+            f["diff_text"] += f"\n# [TRUNCATED: diff was {lines} lines, showing first {_MAX_DIFF_LINES_PER_FILE}]\n"
 
         processed_files.append(f)
 
     if total_files > _MAX_TOTAL_FILES_WARN:
         logger.warning(
-            "Large PR detected: %d changed files after filtering noise — "
-            "consider implementing rate/size limiting",
+            "Large PR detected: %d changed files after filtering noise — consider implementing rate/size limiting",
             total_files,
         )
 

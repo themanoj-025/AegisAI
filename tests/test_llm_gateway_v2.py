@@ -9,8 +9,6 @@ pytestmark = pytest.mark.unit
 """Tests for LLM gateway provider selection and retry."""
 
 
-
-
 class TestLLMGatewayV2:
     """Additional tests for LLM gateway."""
 

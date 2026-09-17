@@ -55,12 +55,9 @@ if _PROM_AVAILABLE:
         ["method", "endpoint"],
         buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
     )
-    WEBHOOK_RECEIVED = Counter(
-        "aegisai_webhook_received_total", "Webhook events received", ["event", "action"])
-    WEBHOOK_QUEUED = Counter(
-        "aegisai_webhook_queued_total", "Review jobs enqueued", ["repo"])
-    WEBHOOK_DUPES = Counter(
-        "aegisai_webhook_deduped_total", "Deduplicated webhooks")
+    WEBHOOK_RECEIVED = Counter("aegisai_webhook_received_total", "Webhook events received", ["event", "action"])
+    WEBHOOK_QUEUED = Counter("aegisai_webhook_queued_total", "Review jobs enqueued", ["repo"])
+    WEBHOOK_DUPES = Counter("aegisai_webhook_deduped_total", "Deduplicated webhooks")
     WEBHOOK_RETRY_SCHEDULED = Counter(
         "aegisai_webhook_retry_scheduled_total",
         "Webhook events scheduled for retry",
@@ -87,8 +84,8 @@ if _PROM_AVAILABLE:
         ["repo"],
     )
     WEBHOOK_REPLAYED = Counter(
-        "aegisai_webhook_replayed_total",
-        "Dead-lettered webhook events replayed via the admin API")
+        "aegisai_webhook_replayed_total", "Dead-lettered webhook events replayed via the admin API"
+    )
 
 app = FastAPI(
     title="AegisAI",
@@ -115,9 +112,11 @@ app = FastAPI(
 # --- OpenTelemetry distributed tracing (OTEL_ENABLED=true) ---
 try:
     from app.tracing import setup_tracing
+
     _otel_ok = setup_tracing("aegisai-api")
     if _otel_ok:
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
         FastAPIInstrumentor.instrument_app(app)
 except ImportError:
     pass
@@ -132,7 +131,7 @@ async def verify_api_key(
     """Verify API key from Authorization header. Enabled when AEGIS_API_KEY is set."""
     api_key = settings.aegis_api_key
     if not api_key:
-        return credentials  # No key configured — open access
+        return credentials or HTTPAuthorizationCredentials(scheme="", credentials="")  # No key configured — open access
     if credentials is None:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
     if not secrets.compare_digest(credentials.credentials, api_key):
@@ -156,13 +155,14 @@ app.add_middleware(
 # ── Rate Limiting ─────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 app.add_middleware(SlowAPIMiddleware)
 
 
 @app.middleware("http")
 async def add_request_id_and_security_headers(request: Request, call_next) -> Any:
     import time as _time
+
     request.state.start_time = _time.time()
     """Add request ID and security headers to every response."""
     req_id = set_request_id()
@@ -172,9 +172,7 @@ async def add_request_id_and_security_headers(request: Request, call_next) -> An
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-XSS-Protection"] = "0"
-    response.headers["Permissions-Policy"] = (
-        "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-    )
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
     response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none';"
 
     if _PROM_AVAILABLE:
@@ -183,9 +181,7 @@ async def add_request_id_and_security_headers(request: Request, call_next) -> An
         path = request.url.path
         REQUEST_COUNT.labels(method=request.method, endpoint=path, status=response.status_code).inc()
         REQUEST_LATENCY.labels(method=request.method, endpoint=path).observe(
-            _time.time() - request.state.start_time
-            if hasattr(request.state, "start_time")
-            else 0.0
+            _time.time() - request.state.start_time if hasattr(request.state, "start_time") else 0.0
         )
 
     return response
@@ -309,7 +305,7 @@ async def github_webhook(request: Request) -> Response:
             pr_number,
             head_sha[:7],
         )
-        return {"status": "received"}
+        return JSONResponse(content={"status": "received"})
 
     if status == "deduplicated":
         logger.info(
@@ -320,7 +316,7 @@ async def github_webhook(request: Request) -> Response:
         )
         if _PROM_AVAILABLE:
             WEBHOOK_DUPES.inc()
-        return {"status": "deduplicated"}
+        return JSONResponse(content={"status": "deduplicated"})
 
     if status == "retrying":
         # The event is safe — it will be retried with backoff by the worker.
@@ -332,7 +328,7 @@ async def github_webhook(request: Request) -> Response:
             pr_number,
             head_sha[:7],
         )
-        return {"status": "received", "detail": "queued_for_retry"}
+        return JSONResponse(content={"status": "received", "detail": "queued_for_retry"})
 
     # Nothing was persisted — signal failure so GitHub retries the webhook.
     if _PROM_AVAILABLE:

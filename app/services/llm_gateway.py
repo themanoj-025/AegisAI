@@ -51,8 +51,7 @@ class _AnthropicProvider(_LLMProvider):
         if response_format == "json":
             # For Claude, we instruct it clearly in the system prompt
             actual_system = (
-                system_prompt
-                + "\n\nIMPORTANT: You MUST respond with valid JSON only, no surrounding text or markdown."
+                system_prompt + "\n\nIMPORTANT: You MUST respond with valid JSON only, no surrounding text or markdown."
             )
         else:
             actual_system = system_prompt
@@ -154,9 +153,7 @@ def _get_provider() -> _LLMProvider:
         _provider = _OpenAIProvider()
         logger.info("LLM provider: OpenAI/GPT")
     else:
-        raise ValueError(
-            f"Unknown LLM_PROVIDER: '{provider_name}'. Must be 'anthropic' or 'openai'."
-        )
+        raise ValueError(f"Unknown LLM_PROVIDER: '{provider_name}'. Must be 'anthropic' or 'openai'.")
 
     return _provider
 

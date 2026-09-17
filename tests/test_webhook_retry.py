@@ -214,9 +214,7 @@ def test_retry_webhook_enqueue_raises_below_max(fake_redis: FakeRedis) -> None:
         patch.object(wr, "get_current_job", return_value=job),
         patch.object(wr, "_enqueue_review_once", return_value=wr.STATUS_FAILED),
         patch.object(wr, "move_to_dlq") as dlq,
-        patch.object(
-            wr, "settings", SimpleNamespace(webhook_retry_max_attempts=5)
-        ),
+        patch.object(wr, "settings", SimpleNamespace(webhook_retry_max_attempts=5)),
     ):
         with pytest.raises(RuntimeError):
             wr.retry_webhook_enqueue(EVENT)
@@ -231,9 +229,7 @@ def test_retry_webhook_enqueue_dead_letters_at_max(fake_redis: FakeRedis) -> Non
         patch.object(wr, "get_current_job", return_value=job),
         patch.object(wr, "_enqueue_review_once", return_value=wr.STATUS_FAILED),
         patch.object(wr, "move_to_dlq") as dlq,
-        patch.object(
-            wr, "settings", SimpleNamespace(webhook_retry_max_attempts=5)
-        ),
+        patch.object(wr, "settings", SimpleNamespace(webhook_retry_max_attempts=5)),
     ):
         wr.retry_webhook_enqueue(EVENT)  # must NOT raise on final attempt
     assert job.meta["attempt"] == 5
@@ -263,9 +259,7 @@ def test_replay_dlq_removes_handled_keeps_failed(fake_redis: FakeRedis) -> None:
         wr.move_to_dlq(EVENT, error="e2", attempts=5)
     with (
         patch.object(wr, "get_redis", return_value=fake_redis),
-        patch.object(
-            wr, "enqueue_review_event", side_effect=[wr.STATUS_QUEUED, wr.STATUS_FAILED]
-        ),
+        patch.object(wr, "enqueue_review_event", side_effect=[wr.STATUS_QUEUED, wr.STATUS_FAILED]),
     ):
         # queued → removed from DLQ; failed → kept for another attempt
         assert wr.replay_dlq() == 1
@@ -335,9 +329,7 @@ def test_get_retry_stats_includes_dlq_moves(fake_redis: FakeRedis) -> None:
 
 
 def test_notify_dead_letter_sends_slack_payload(fake_redis: FakeRedis) -> None:
-    with patch.object(
-        wr, "settings", SimpleNamespace(alert_webhook_url="https://hooks.slack.com/services/AAA/BBB")
-    ):
+    with patch.object(wr, "settings", SimpleNamespace(alert_webhook_url="https://hooks.slack.com/services/AAA/BBB")):
         with (
             patch.object(wr, "get_redis", return_value=fake_redis),
             patch.object(wr.httpx, "post") as post,
@@ -365,9 +357,7 @@ def test_notify_dead_letter_noop_without_webhook(fake_redis: FakeRedis) -> None:
 
 
 def test_notify_dead_letter_never_raises(fake_redis: FakeRedis) -> None:
-    with patch.object(
-        wr, "settings", SimpleNamespace(alert_webhook_url="https://hooks.slack.com/AAA")
-    ):
+    with patch.object(wr, "settings", SimpleNamespace(alert_webhook_url="https://hooks.slack.com/AAA")):
         with (
             patch.object(wr, "get_redis", return_value=fake_redis),
             patch.object(wr.httpx, "post", side_effect=TimeoutError("webhook down")),
