@@ -163,14 +163,9 @@ def run_security_agent(pr_files: list[dict]) -> list[dict]:
         prompt_parts = []
         for f in batch:
             redacted_diff = redact_secrets(f["diff_text"])
-            prompt_parts.append(
-                f"--- File: {f['filename']} (status: {f['status']}) ---\n{redacted_diff}"
-            )
+            prompt_parts.append(f"--- File: {f['filename']} (status: {f['status']}) ---\n{redacted_diff}")
 
-        user_prompt = (
-            "Review the following code changes for security vulnerabilities.\n\n"
-            + "\n\n".join(prompt_parts)
-        )
+        user_prompt = "Review the following code changes for security vulnerabilities.\n\n" + "\n\n".join(prompt_parts)
 
         try:
             response_text = call_llm(_SYSTEM_PROMPT, user_prompt, response_format="json")

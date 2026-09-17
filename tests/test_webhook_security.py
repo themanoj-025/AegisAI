@@ -14,13 +14,15 @@ try:
 except ImportError:
     from fastapi import FastAPI
 
-
     app = FastAPI()
+
     @app.post("/webhook")
     async def webhook() -> dict[str, object]:
         return {"status": "ok"}
 
+
 client = TestClient(app)
+
 
 def test_webhook_hmac_rejection() -> None:
     """
@@ -37,11 +39,11 @@ def test_webhook_hmac_rejection() -> None:
     headers = {
         "X-Hub-Signature-256": forged_signature,
         "X-GitHub-Event": "pull_request",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     # Simulate webhook request
-    response = client.post("/webhook", data=payload, headers=headers)
+    response = client.post("/webhook", content=payload, headers=headers)
 
     # Assert rejection (401 Unauthorized or 403 Forbidden)
     # If the app module isn't loaded, we'll get 200 from the dummy,
