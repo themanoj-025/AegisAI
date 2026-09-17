@@ -11,14 +11,7 @@ class TestGetPrDiff:
     """Tests for get_pr_diff with a mocked subprocess."""
 
     def _sample_diff(self) -> str:
-        return (
-            "diff --git a/app.py b/app.py\n"
-            "--- a/app.py\n"
-            "+++ b/app.py\n"
-            "@@ -1 +1 @@\n"
-            "-old\n"
-            "+new\n"
-        )
+        return "diff --git a/app.py b/app.py\n--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-old\n+new\n"
 
     def test_success_parses_diff(self) -> None:
         proc = Mock(returncode=0, stdout=self._sample_diff(), stderr="")
@@ -36,8 +29,7 @@ class TestGetPrDiff:
     def test_binary_files_filtered(self) -> None:
         diff = (
             "diff --git a/image.png b/image.png\n"
-            "Binary files a/image.png and b/image.png differ\n"
-            + self._sample_diff()
+            "Binary files a/image.png and b/image.png differ\n" + self._sample_diff()
         )
         proc = Mock(returncode=0, stdout=diff, stderr="")
         with patch("app.services.diff_extractor.subprocess.run", return_value=proc):

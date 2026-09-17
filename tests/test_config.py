@@ -10,8 +10,9 @@ pytestmark = pytest.mark.integration
 """Tests for app.config — Settings loading with defaults and environment overrides."""
 
 
-
 pytestmark = pytest.mark.slow
+
+
 class TestSettings:
     def test_defaults_are_set(self) -> None:
         """Settings should have sensible defaults even without env vars."""

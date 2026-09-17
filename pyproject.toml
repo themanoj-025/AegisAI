@@ -39,9 +39,8 @@ ignore = [
     "N805",    # first argument should be self/cls
 ]
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.isort]
 profile = "black"
@@ -60,7 +59,7 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 ignore_missing_imports = true
 warn_return_any = true
 warn_unused_configs = true

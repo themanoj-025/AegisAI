@@ -78,9 +78,7 @@ def clone_pr_repo(
         )
 
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Git clone failed for {repo_full_name} (PR #{pr_number}): {result.stderr.strip()}"
-            )
+            raise RuntimeError(f"Git clone failed for {repo_full_name} (PR #{pr_number}): {result.stderr.strip()}")
 
         # Checkout the head SHA
         logger.debug(

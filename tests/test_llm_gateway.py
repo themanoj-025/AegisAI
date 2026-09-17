@@ -9,7 +9,6 @@ from app.services.llm_gateway import _get_provider, _is_retryable, _RetryableErr
 pytestmark = pytest.mark.unit
 
 
-
 class TestIsRetryable:
     """Tests for _is_retryable helper."""
 

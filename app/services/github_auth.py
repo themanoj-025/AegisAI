@@ -7,7 +7,6 @@ for short-lived installation access tokens.
 import logging
 import time
 from pathlib import Path
-from typing import cast
 
 import httpx
 from jwt import PyJWTError
@@ -52,9 +51,9 @@ def _generate_jwt() -> str:
     }
 
     try:
-        # jwt.encode is untyped upstream (returns Any); cast pins the
+        # jwt.encode is untyped upstream (returns Any); annotate the
         # declared str contract without changing runtime behavior.
-        token = cast(str, jwt.encode(payload, private_key, algorithm="RS256"))
+        token: str = jwt.encode(payload, private_key, algorithm="RS256")
         return token
     except PyJWTError as e:
         raise RuntimeError(f"Failed to generate JWT: {e}") from e
@@ -91,8 +90,7 @@ def get_installation_token(installation_id: int) -> str:
 
     if response.status_code == 401:
         raise PermissionError(
-            f"GitHub API returned 401 for installation {installation_id}. "
-            "Check your GITHUB_APP_ID and private key."
+            f"GitHub API returned 401 for installation {installation_id}. Check your GITHUB_APP_ID and private key."
         )
     if response.status_code == 403:
         raise PermissionError(
@@ -100,9 +98,7 @@ def get_installation_token(installation_id: int) -> str:
             "The App may not be installed on this account or lacks required permissions."
         )
     if response.status_code != 201:
-        raise RuntimeError(
-            f"Failed to get installation token (HTTP {response.status_code}): {response.text}"
-        )
+        raise RuntimeError(f"Failed to get installation token (HTTP {response.status_code}): {response.text}")
 
     data = response.json()
     token: str = data["token"]

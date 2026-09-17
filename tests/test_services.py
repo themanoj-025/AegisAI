@@ -150,13 +150,7 @@ class TestParseDiffOutput:
         assert files[0]["status"] == "deleted"
 
     def test_renamed_file(self) -> None:
-        diff = (
-            "diff --git a/old.py b/new.py\n"
-            "rename from old.py\n"
-            "rename to new.py\n"
-            "--- a/old.py\n"
-            "+++ b/new.py\n"
-        )
+        diff = "diff --git a/old.py b/new.py\nrename from old.py\nrename to new.py\n--- a/old.py\n+++ b/new.py\n"
         files = _parse_diff_output(diff)
         assert len(files) == 1
         assert files[0]["status"] == "renamed"
@@ -256,6 +250,7 @@ class TestCircuitBreaker:
         cb.record_failure()
         assert cb.state == CircuitState.OPEN
         import time
+
         time.sleep(0.02)
         assert cb.state == CircuitState.HALF_OPEN
 
@@ -263,6 +258,7 @@ class TestCircuitBreaker:
         cb = CircuitBreaker(failure_threshold=1, recovery_timeout=0.01)
         cb.record_failure()
         import time
+
         time.sleep(0.02)
         assert cb.state == CircuitState.HALF_OPEN
         cb.record_success()
@@ -272,6 +268,7 @@ class TestCircuitBreaker:
         cb = CircuitBreaker(failure_threshold=1, recovery_timeout=0.01)
         cb.record_failure()
         import time
+
         time.sleep(0.02)
         assert cb.state == CircuitState.HALF_OPEN
         cb.record_failure()

@@ -146,7 +146,8 @@ def persist_webhook_event(event: dict[str, Any]) -> str:
         event["pr_number"],
         job.id,
     )
-    return cast(str, job.id)
+    token: str = job.id
+    return token
 
 
 def retry_webhook_enqueue(event: dict[str, Any]) -> None:
@@ -157,6 +158,8 @@ def retry_webhook_enqueue(event: dict[str, Any]) -> None:
     instead of raising (so RQ does not keep retrying a doomed job).
     """
     job = get_current_job()
+    if job is None:  # pragma: no cover - only outside a worker process
+        raise RuntimeError("retry_webhook_enqueue must run inside an RQ worker")
     meta = dict(job.meta or {})
     attempt = int(meta.get("attempt", 0)) + 1
     meta["attempt"] = attempt
@@ -270,7 +273,7 @@ def _remove_dlq_entry_by_id(entry_id: str) -> bool:
     for raw in redis_client.lrange(DLQ_KEY, 0, -1):
         entry = json.loads(raw)
         if entry.get("id") == entry_id:
-            redis_client.lrem(DLQ_KEY, 1, raw)
+            redis_client.lrem(DLQ_KEY, 1, str(raw))
             return True
     return False
 
@@ -309,7 +312,8 @@ def clear_dlq() -> int:
     count = redis_client.llen(DLQ_KEY)
     if count:
         redis_client.delete(DLQ_KEY)
-    return cast(int, count)
+    total: int = count
+    return total
 
 
 def get_dlq_metrics() -> dict[str, Any]:

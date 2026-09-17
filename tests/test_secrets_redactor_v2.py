@@ -1,6 +1,5 @@
 """Tests for secrets redactor service."""
 
-
 from app.services.secrets_redactor import redact_secrets
 
 

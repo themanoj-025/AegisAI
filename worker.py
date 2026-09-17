@@ -31,7 +31,7 @@ def main() -> None:
     from app.services.webhook_retry import retry_webhook_enqueue
     from app.workers.review_worker import run_review_job
 
-    _ = run_review_job        # register the review job function with RQ
+    _ = run_review_job  # register the review job function with RQ
     _ = retry_webhook_enqueue  # register the webhook retry job function with RQ
 
     queues = ["default", settings.webhook_retry_queue]

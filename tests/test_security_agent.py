@@ -11,7 +11,6 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
-
 class TestExtractJson:
     """_extract_json parses LLM responses with various formatting."""
 
@@ -101,10 +100,7 @@ class TestBatchFiles:
     def test_small_files_batched(self) -> None:
         from app.agents.security_agent import _batch_files
 
-        files = [
-            {"filename": f"f{i}.py", "diff_text": "+line\n" * 5, "status": "modified"}
-            for i in range(3)
-        ]
+        files = [{"filename": f"f{i}.py", "diff_text": "+line\n" * 5, "status": "modified"} for i in range(3)]
         batches = _batch_files(files)
         # All 3 small files should be in one batch
         assert len(batches) == 1
@@ -122,10 +118,7 @@ class TestBatchFiles:
     def test_many_small_files_split_by_line_count(self) -> None:
         from app.agents.security_agent import _batch_files
 
-        files = [
-            {"filename": f"f{i}.py", "diff_text": "+line\n" * 50, "status": "modified"}
-            for i in range(5)
-        ]
+        files = [{"filename": f"f{i}.py", "diff_text": "+line\n" * 50, "status": "modified"} for i in range(5)]
         batches = _batch_files(files)
         # Each file has 50 lines, limit is 200 lines per batch
         # So 4 fit in first batch (200 lines), 5th goes to second
@@ -146,18 +139,20 @@ class TestRunSecurityAgent:
         """When LLM returns a finding, it should have low_confidence set."""
         from app.agents.security_agent import run_security_agent
 
-        mock_response = json.dumps({
-            "findings": [
-                {
-                    "file": "app.py",
-                    "line_hint": "os.system(cmd)",
-                    "severity": "critical",
-                    "category": "command_injection",
-                    "description": "Direct command injection",
-                    "recommendation": "Use subprocess with list args",
-                }
-            ]
-        })
+        mock_response = json.dumps(
+            {
+                "findings": [
+                    {
+                        "file": "app.py",
+                        "line_hint": "os.system(cmd)",
+                        "severity": "critical",
+                        "category": "command_injection",
+                        "description": "Direct command injection",
+                        "recommendation": "Use subprocess with list args",
+                    }
+                ]
+            }
+        )
 
         with patch("app.agents.security_agent.call_llm", return_value=mock_response):
             files = [{"filename": "app.py", "diff_text": "+os.system(cmd)", "status": "modified"}]
@@ -168,18 +163,20 @@ class TestRunSecurityAgent:
     def test_line_hint_not_in_diff_marks_low_confidence(self) -> None:
         from app.agents.security_agent import run_security_agent
 
-        mock_response = json.dumps({
-            "findings": [
-                {
-                    "file": "app.py",
-                    "line_hint": "totally different code",
-                    "severity": "high",
-                    "category": "xss",
-                    "description": "XSS vulnerability",
-                    "recommendation": "Escape output",
-                }
-            ]
-        })
+        mock_response = json.dumps(
+            {
+                "findings": [
+                    {
+                        "file": "app.py",
+                        "line_hint": "totally different code",
+                        "severity": "high",
+                        "category": "xss",
+                        "description": "XSS vulnerability",
+                        "recommendation": "Escape output",
+                    }
+                ]
+            }
+        )
 
         with patch("app.agents.security_agent.call_llm", return_value=mock_response):
             files = [{"filename": "app.py", "diff_text": "+print('hello')", "status": "modified"}]

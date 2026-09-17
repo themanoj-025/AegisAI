@@ -79,12 +79,7 @@ class TestParseDiffOutput:
         assert result[0]["status"] == "deleted"
 
     def test_renamed_status(self) -> None:
-        diff = (
-            "diff --git a/old.py b/new.py\n"
-            "rename from old.py\n"
-            "rename to new.py\n"
-            "index abc..def 100644\n"
-        )
+        diff = "diff --git a/old.py b/new.py\nrename from old.py\nrename to new.py\nindex abc..def 100644\n"
         result = de._parse_diff_output(diff)
         assert len(result) == 1
         assert result[0]["filename"] == "new.py"
@@ -115,10 +110,7 @@ class TestParseDiffOutput:
         assert [f["filename"] for f in result] == ["app.py"]
 
     def test_binary_file_marked(self) -> None:
-        diff = (
-            "diff --git a/image.png b/image.png\n"
-            "Binary files a/image.png and b/image.png differ\n"
-        )
+        diff = "diff --git a/image.png b/image.png\nBinary files a/image.png and b/image.png differ\n"
         result = de._parse_diff_output(diff)
         assert len(result) == 1
         assert result[0]["status"] == "binary"
