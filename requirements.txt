@@ -31,4 +31,4 @@ opentelemetry-instrumentation-fastapi>=0.41b0,<1.0
 # - jaraco.context <6.1.0: CVE-2026-23949 (path traversal)
 # - wheel <0.46.2: CVE-2026-24049 (privilege escalation / arbitrary code)
 jaraco.context>=6.1.2
-wheel>=0.46.2
+wheel>=0.48.0
