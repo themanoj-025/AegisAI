@@ -8,8 +8,9 @@ import hashlib
 import hmac
 import json
 import secrets
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
