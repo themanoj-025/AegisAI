@@ -9,7 +9,7 @@ import hmac
 import json
 import secrets
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Callable, cast
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -155,7 +155,10 @@ app.add_middleware(
 # ── Rate Limiting ─────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(
+    RateLimitExceeded,
+    cast(Callable[[Request, Exception], Response], _rate_limit_exceeded_handler),
+)
 app.add_middleware(SlowAPIMiddleware)
 
 
