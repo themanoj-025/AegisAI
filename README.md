@@ -26,6 +26,17 @@
 
 ---
 
+## 📸 Screenshots
+
+> _To add screenshots: start the stack with `docker compose up -d`, open a test PR, capture the review comment, save images to `docs/assets/`, and reference them below._
+>
+> **Suggested screenshots:**
+> - AegisAI review comment posted inline on a vulnerable line
+> - PR review summary listing detected vulnerability categories
+> - Queue/DLQ stats from `/api/v1/webhooks/queue/stats`
+
+---
+
 ## 📋 Table of Contents
 
 - [✨ Features](#-features)
@@ -253,7 +264,7 @@ AegisAI/
 
 ## 🧪 Testing
 
-## 🔁 Webhook Reliability
+### 🔁 Webhook Reliability
 
 Webhook events are never silently dropped when the queue is unavailable:
 
