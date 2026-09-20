@@ -34,6 +34,8 @@
 > - AegisAI review comment posted inline on a vulnerable line
 > - PR review summary listing detected vulnerability categories
 > - Queue/DLQ stats from `/api/v1/webhooks/queue/stats`
+>
+> ⚠️ **Note:** the interactive Swagger UI at `/docs` renders blank in captures — the app's strict Content-Security-Policy (`default-src 'none'`) intentionally blocks its CDN assets. Capture the PR-review flow instead.
 
 ---
 
