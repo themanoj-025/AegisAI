@@ -17,7 +17,7 @@ severity summary.
 
 ## 2. Layered model
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Interface / API                                                      │
 │   app/main.py  — FastAPI: GET /health · POST /webhooks/github         │

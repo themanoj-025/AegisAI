@@ -36,7 +36,7 @@
 
 ### Example response
 
-```
+```text
 202 Accepted
 ```
 

@@ -25,7 +25,7 @@
 - Naming: `snake_case` functions/vars, `CamelCase` classes.
 - Folder structure:
 
-```
+```text
 app/
   main.py            # FastAPI app
   config.py          # settings from env

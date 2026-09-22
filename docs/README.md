@@ -11,7 +11,7 @@ LLM security review → hallucination-guarded findings → PR review).
 
 ## Structure
 
-```
+```text
 docs/
 ├── README.md                      ← this index
 ├── architecture.md                canonical architecture reference
