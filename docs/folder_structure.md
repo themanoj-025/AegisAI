@@ -6,7 +6,7 @@ package, two root entry points, Docker tooling, and a docs suite.
 
 ## 1. Current tree (canonical)
 
-```
+```text
 AegisAI/
 ├── app/                         # Core package
 │   ├── __init__.py
@@ -43,7 +43,7 @@ AegisAI/
 
 ## 2. Docs tree
 
-```
+```text
 docs/
 ├── architecture.md              # canonical architecture reference
 ├── folder_structure.md          # this file

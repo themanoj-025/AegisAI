@@ -73,7 +73,7 @@ The project solves the problem of **manual security review bottlenecks** in soft
 
 ## 3. High-Level Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         GitHub Platform                             │
 │  ┌──────────┐    ┌──────────────┐    ┌────────────────────────┐    │
@@ -142,7 +142,7 @@ The pattern is justified by: the `app/main.py` webhook handler only enqueues job
 
 ## 4. Complete Folder Structure Tree
 
-```
+```text
 AegisAI/
 ├── .dockerignore                    # Docker build context exclusions
 ├── .github/
@@ -786,7 +786,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ### Internal Module Dependencies
 
-```
+```text
 app/main.py
   ├── app/config.py
   ├── app/services/queue.py

@@ -49,7 +49,7 @@ N/A — no pixel UI in v1. Comment text uses GitHub's native rendering.
 
 **Review Comment anatomy** (ASCII):
 
-```
+```text
 ┌───────────────────────────────────────┐
 │ [severity] [category]  — file:line    │
 │ What: <one-line description>          │

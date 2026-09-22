@@ -5,7 +5,7 @@ orchestration → domain agent + services → configuration. No circular imports
 
 ## 1. Dependency Graph
 
-```
+```text
   ENTRY POINTS
   ┌────────────────────────┐      ┌────────────────────────┐
   │ app/main.py            │      │ worker.py (root)       │
