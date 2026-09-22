@@ -154,7 +154,7 @@ python worker.py
 
 ## 🏗️ Architecture
 
-```
+```text
 
 
 
@@ -221,7 +221,7 @@ AegisAI scans for 12+ vulnerability categories:
 
 ## 📁 Project Structure
 
-```
+```text
 AegisAI/
 ├── app/
 │   ├── main.py              # FastAPI webhook receiver
