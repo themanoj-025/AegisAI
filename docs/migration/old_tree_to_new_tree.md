@@ -7,7 +7,7 @@ suite. **Zero code changes, zero import changes, zero entry-point changes.**
 
 ## Before (2026-08-10, after v5.0)
 
-```
+```text
 AegisAI/
 ├── app/
 │   ├── __init__.py · main.py · config.py
@@ -28,7 +28,7 @@ AegisAI/
 
 ## After (2026-08-11)
 
-```
+```text
 AegisAI/
 ├── app/                            (unchanged)
 ├── worker.py                       (unchanged — entry-point contract)

@@ -5,7 +5,7 @@ and the **worker** (RQ background processor), connected by Redis.
 
 ## 1. API Boot (uvicorn)
 
-```
+```text
 uvicorn app.main:app --host 0.0.0.0 --port 8000      # Docker: CMD in api target
 │
 ├─ 1. app.config settings load (pydantic-settings ← .env)
@@ -20,7 +20,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000      # Docker: CMD in api target
 
 ## 2. Worker Boot (RQ)
 
-```
+```text
 python worker.py                                   # Docker: worker target
 │
 ├─ 1. logging configured (stream handler, "aegisai" logger)
