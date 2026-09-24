@@ -1,0 +1,17 @@
+# Gitleaks configuration
+# Extends gitleaks' default ruleset with repository-specific allowlists.
+# NOTE: allowlists here are for NON-PRODUCTION test fixtures only.
+title = "gitleaks config for AegisAI"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Secrets-redaction test fixtures (dummy values by design)"
+paths = [
+  # The redaction suite's entire purpose is feeding key/PEM/JWT-shaped
+  # dummies through redact_secrets(). Path-scoped (not content-allowlisted)
+  # so a real key pasted anywhere else in the repo still trips the scanner.
+  '''^tests/test_secrets_redactor(_v2)?\.py$''',
+  '''^tests/test_services\.py$''',
+]
