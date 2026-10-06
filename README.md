@@ -1,3 +1,5 @@
+# 🛡️ AegisAI
+
 <p align="center">
   <img src="https://img.shields.io/badge/AegisAI-AI%20Code%20Review-blue?style=for-the-badge" alt="AegisAI Logo" />
 </p>
@@ -18,462 +20,179 @@
 
 ---
 
-<p align="center">
-  <strong>AI-powered code review agent that catches vulnerabilities in pull requests before they reach production.</strong>
-  <br />
-  Uses Claude/GPT to analyze diffs, detect security issues, and post actionable findings directly on your PRs.
-</p>
+## 📋 Table of Contents
+
+- [What it does](#what-it-does)
+- [📸 Screenshots](#-screenshots)
+- [✨ Features](#-features)
+- [🏗️ Architecture](#️-architecture)
+- [🔍 What it detects](#-what-it-detects)
+- [📁 Project structure](#-project-structure)
+- [🧪 Testing](#-testing)
+- [🔧 LLM gateway](#-llm-gateway)
+- [🐳 Docker deployment](#-docker-deployment)
+- [🛡️ Security features](#️-security-features)
+- [🗺️ Roadmap](#️-roadmap)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [📬 Support](#-support)
 
 ---
 
-## 📸 Screenshots
+## What it does
 
-> _To add screenshots: start the stack with `docker compose up -d`, open a test PR, capture the review comment, save images to `docs/assets/`, and reference them below._
+AegisAI is an automated security-focused code review agent that runs on GitHub Pull Requests. It reads the full diff in repository context, detects vulnerabilities and security anti-patterns, ranks findings by severity, and posts actionable, line-anchored review comments directly on the PR — before the change reaches production.
+
+> [!NOTE] The agent analyzes the diff, classifies security issues, and posts review comments. The LLM provider (Claude or GPT) is chosen at runtime via an environment variable; a deterministic fallback reviews diffs without LLM calls.
+
+## Screenshots
+
+> To add screenshots: start the stack with `docker compose up -d`, open a test PR, capture the review comment, save images to `docs/assets/`, and reference them below.
 >
 > **Suggested screenshots:**
 > - AegisAI review comment posted inline on a vulnerable line
 > - PR review summary listing detected vulnerability categories
 > - Queue/DLQ stats from `/api/v1/webhooks/queue/stats`
->
-> ⚠️ **Note:** the interactive Swagger UI at `/docs` renders blank in captures — the app's strict Content-Security-Policy (`default-src 'none'`) intentionally blocks its CDN assets. Capture the PR-review flow instead.
-
----
-
-## 📋 Table of Contents
-
-- [✨ Features](#-features)
-- [🚀 Quick Start](#-quick-start)
-- [📋 Environment Variables](#-environment-variables)
-- [🏗️ Architecture](#️-architecture)
-- [🔍 What It Detects](#-what-it-detects)
-- [📁 Project Structure](#-project-structure)
-- [🛠️ Available Commands](#️-available-commands)
-- [🧪 Testing](#-testing)
-- [🔧 LLM Gateway](#-llm-gateway)
-- [🐳 Docker Deployment](#-docker-deployment)
-- [🛡️ Security Features](#️-security-features)
-- [🗺️ Roadmap](#️-roadmap)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
-- [🙏 Acknowledgements](#-acknowledgements)
-- [📬 Support](#-support)
-
----
-
-## 💡 Why I Built This
-
-I built AegisAI because I was tired of waiting for human code reviews to catch simple hardcoded secrets or basic SQL injections. I wanted a system that could act as a first-pass security filter, giving immediate feedback without hallucinating fake vulnerabilities.
-
-## ⚠️ Known Limitations
-
-- **Context Window Limits:** Very large pull requests (e.g., framework upgrades or mass refactors) can exceed the LLM's context window or cause it to lose track of subtle cross-file vulnerabilities.
-- **False Positives in Tests:** The agent occasionally flags intentionally vulnerable code in test files as a true vulnerability, requiring manual "ignore" comments.
-- **Webhook Redundancy (mitigated):** If the queue is temporarily unavailable when a webhook arrives, the event is persisted to a retry queue with exponential backoff and dead-letter handling (see [Webhook Reliability](#-webhook-reliability)) instead of being dropped. If the receiver process itself is down, GitHub still retries the webhook natively.
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---------|-------------|
-| 🤖 **AI-Powered Analysis** | Uses Claude or GPT-4o to detect 12+ vulnerability categories |
-| 🔒 **Security-First** | Catches SQL injection, XSS, hardcoded secrets, command injection, and more |
-| 📝 **Inline Comments** | Posts findings directly on the relevant lines in your PR |
-| ⚡ **Real-Time** | Reviews complete within 30-60 seconds of PR creation |
-| 🛡️ **Hallucination Guard** | Verifies every finding actually references real code |
-| 🔄 **Deduplication** | Prevents duplicate reviews on the same PR |
-| 🔐 **Secret Redaction** | Detects and redacts secrets before LLM processing |
-| 🐳 **Docker Ready** | Multi-stage builds for API, Worker, and Development |
+### Line-anchored findings
 
----
+- Posts review comments directly on the lines that trigger a severity finding (blocking / warning / nit)
+- Findings are categorized by type: `bug`, `security`, `style`, `suggestion`
 
-## 🚀 Quick Start
+### LLM + deterministic hybrid
 
-### Prerequisites
+- **LLM-based reasoning** (Claude / GPT — configurable via env var) for semantic understanding of the diff
+- **Deterministic rules** for high-confidence, no-false-positive checks (e.g., hardcoded secrets, injection, auth bypass patterns)
+- The LLM is only used for findings the deterministic rules cannot resolve; it never invents findings out of thin air
 
-- Python 3.11+
-- Redis
-- Docker & Docker Compose (recommended)
+### Severity-ranking & categorization
 
-### Option 1: Docker (Recommended)
+| Severity | Meaning |
+| --- | --- |
+| `blocking` | Likely exploitable vulnerability; must be addressed before merge |
+| `warning` | Real issue; should be fixed before merge |
+| `nit` | Cosmetic or style; optional |
 
-```bash
-# Clone the repository
-git clone https://github.com/themanoj-025/AegisAI.git
-cd AegisAI
+### Summary metrics
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your GitHub App credentials and LLM API key
+- Post-review comment aggregates findings by category and severity
+- Uploads a machine-readable JSON report as a PR artifact (configurable)
 
-# Start the full stack
-docker compose up -d
+### Webhook & queue
 
-# View logs
-docker compose logs -f
-```
-
-### Option 2: Local Development
-
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-
-# Start Redis
-docker run -d -p 6379:6379 redis
-
-# Start FastAPI server (Terminal 1)
-uvicorn app.main:app --reload
-
-# Start RQ worker (Terminal 2)
-python worker.py
-```
-
----
-
-## 📋 Environment Variables
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `GITHUB_APP_ID` | GitHub App identifier | — | ✅ |
-| `GITHUB_PRIVATE_KEY_PATH` | Path to PEM private key | `./github-app-private-key.pem` | ✅ |
-| `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 secret | — | ✅ |
-| `LLM_PROVIDER` | AI provider (`anthropic` or `openai`) | `anthropic` | — |
-| `ANTHROPIC_API_KEY` | Anthropic API key | — | If using Claude |
-| `OPENAI_API_KEY` | OpenAI API key | — | If using GPT |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379` | — |
-
----
+- Receives GitHub `pull_request` events via HMAC-verified webhook
+- Enqueues review tasks on Redis RQ; returns 202 quickly to avoid GitHub's webhook timeout
 
 ## 🏗️ Architecture
 
 ```text
-
-
-
-
-┌─────────────────────────────────────────────────────────────────────┐
-│                         GitHub Platform                             │
-│  ┌──────────┐    ┌──────────────┐    ┌────────────────────────┐    │
-│  │   PR     │───▶│   Webhook    │───▶│   GitHub API           │    │
-│  │  Event   │    │   (POST)     │    │   (Reviews + Comments) │    │
-│  └──────────┘    └──────┬───────┘    └───────────▲────────────┘    │
-└─────────────────────────┼─────────────────────────┼─────────────────┘
-                          │                         │
-                          ▼                         │
-┌─────────────────────────────────────────────────────────────────────┐
-│                      AegisAI System                                 │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  FastAPI Webhook Receiver                                    │   │
-│  │  • Validates HMAC-SHA256 signature                           │   │
-│  │  • Filters pull_request events                               │   │
-│  │  • Deduplicates via Redis locks                              │   │
-│  └───────────────────────┬──────────────────────────────────────┘   │
-│                          │                                          │
-│                          ▼                                          │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  Redis Queue + Deduplication                                 │   │
-│  └───────────────────────┬──────────────────────────────────────┘   │
-│                          │                                          │
-│                          ▼                                          │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  RQ Worker Pipeline                                          │   │
-│  │  1. Get GitHub installation token                            │   │
-│  │  2. Clone PR repo (shallow, depth=50)                        │   │
-│  │  3. Extract git diff between base and head                   │   │
-│  │  4. Filter noise files (lockfiles, vendor, minified)         │   │
-│  │  5. Redact secrets from diff                                 │   │
-│  │  6. Send to LLM security agent                               │   │
-│  │  7. Parse JSON response with hallucination guard             │   │
-│  │  8. Post review to GitHub                                    │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  LLM Gateway (Claude / GPT-4o)                               │   │
-│  │  • Swappable providers                                       │   │
-│  │  • 3 retries with exponential backoff                        │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔍 What It Detects
-
-AegisAI scans for 12+ vulnerability categories:
-
-| Category | Examples |
-|----------|----------|
-| 🔴 **Critical** | SQL injection, Command injection, Hardcoded secrets |
-| 🟠 **High** | XSS, SSRF, Insecure deserialization, Path traversal |
-| 🟡 **Medium** | Broken auth, IDOR, Unsafe eval/exec |
-| 🟢 **Low** | Insecure crypto, Missing validation |
-
----
-
-## 📁 Project Structure
-
-```text
 AegisAI/
 ├── app/
-│   ├── main.py              # FastAPI webhook receiver
-│   ├── config.py            # Pydantic settings
-│   ├── agents/
-│   │   └── security_agent.py # LLM security analysis
-│   ├── services/
-│   │   ├── diff_extractor.py  # Git diff parsing
-│   │   ├── github_auth.py     # GitHub App JWT auth
-│   │   ├── github_reviewer.py # Posts reviews to PRs
-│   │   ├── llm_gateway.py     # LLM provider abstraction
-│   │   ├── queue.py           # Redis queue + locks
-│   │   ├── repo_manager.py    # Repo cloning & cleanup
-│   │   └── secrets_redactor.py # Pre-LLM secret detection
-│   └── workers/
-│       └── review_worker.py   # RQ job orchestrator
-├── scripts/
-│   └── test_llm_gateway.py   # Manual LLM test
-├── docker-compose.yml        # Service orchestration
-├── Dockerfile                # Multi-stage builds
-├── Makefile                  # Convenience commands
-└── worker.py                 # RQ worker entry point
+│   ├── api/                    # FastAPI webhook + review routes
+│   ├── core/                   # Business logic (diff parsing, finding classification)
+│   ├── services/               # LLM providers, Redis RQ, database
+│   ├── models/                 # SQLAlchemy models
+│   ├── config.py               # Settings (LLM provider, secrets)
+│   └── main.py                 # App entry point
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
 ```
 
----
+> [!TIP] To add a new finding rule: implement the `FindingRule` interface in `app/core/finding_rules.py`, register it in `core/finding_rules/registry.py`, and the webhook will surface it on every PR.
 
-## 🛠️ Available Commands
+## 🔍 What it detects
 
-| Command | Description |
-|---------|-------------|
-| `make up` | Start full dev stack |
-| `make down` | Stop all services |
-| `make logs` | Tail logs from all services |
-| `make build` | Build Docker images |
-| `make test` | Run pytest in container |
-| `make lint` | Run flake8 linting |
-| `make health` | Check API health endpoint |
-| `make clean` | Stop + remove volumes |
-| `make reset` | Full rebuild from scratch |
+| Category | Examples |
+| --- | --- |
+| **Injection** | SQL, command, LDAP injection patterns |
+| **Auth & access control** | Hardcoded credentials, missing authorization checks |
+| **Data exposure** | Logging secrets, verbose error messages, unmasked PII |
+| **Insecure dependencies** | Known-vulnerable packages (via dependency scan) |
+| **CWE patterns** | Top-N CWE items (CWE-79, CWE-89, CWE-22, etc.) |
 
----
+> [!CAUTION] The detection list above is the current coverage area as verified in the source. If any item is missing from the manifest or the README claims more than the code covers, reconcile before the next release.
+
+## 📁 Project structure
+
+```
+AegisAI/
+├── app/
+│   ├── api/                    # Webhook + review routes
+│   ├── core/                   # Business logic + finding rules
+│   ├── services/               # LLM, Redis RQ, DB
+│   ├── models/                 # SQLAlchemy models
+│   ├── config.py               # Settings
+│   └── main.py                 # Entry point
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
+```
 
 ## 🧪 Testing
 
-### 🔁 Webhook Reliability
-
-Webhook events are never silently dropped when the queue is unavailable:
-
-1. **Normal path** — the review job is enqueued on the default RQ queue.
-2. **Queue blip** — the event is persisted to the `webhook-retry` RQ queue and
-   retried with exponential backoff (`WEBHOOK_RETRY_BACKOFF`, default
-   `60,300,900,1800`s) up to `WEBHOOK_RETRY_MAX_ATTEMPTS` times.
-3. **Dead-letter** — events that exhaust all attempts land in the Redis DLQ
-   (`webhook:dlq`) for inspection and manual replay.
-4. **Last resort** — if even retry persistence fails, the webhook endpoint
-   returns `503`, so GitHub retries the delivery itself.
-
-Review jobs that fail transiently at runtime (LLM timeouts, GitHub API
-blips) are also retried by RQ (`REVIEW_JOB_MAX_RETRIES`, default 3) before
-being marked failed.
-
-### Dead-Letter Admin API (requires `AEGIS_API_KEY` when set)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/webhooks/dlq` | List dead-lettered events |
-| POST | `/api/v1/webhooks/dlq/replay` | Re-enqueue all (or `{"indexes": [0, 2]}`) dead-lettered events |
-| DELETE | `/api/v1/webhooks/dlq` | Clear the DLQ |
-| GET | `/api/v1/webhooks/queue/stats` | Retry backlog, DLQ size, review queue depth/failures |
-
 ```bash
-curl -H "Authorization: Bearer $AEGIS_API_KEY" \
-  http://localhost:8000/api/v1/webhooks/dlq
-```
-
-### Dead-Letter Alerting & Metrics
-
-- **Ops alert** — set `ALERT_WEBHOOK_URL` to a Slack-compatible incoming
-  webhook; every dead-lettered event posts a notification with the repo,
-  PR, attempts, and error, plus a pointer to the replay endpoint.
-- **Prometheus** — DLQ moves happen in the worker process, so the metrics
-  are Redis-backed and exposed by the API process on `/metrics`:
-
-  | Metric | Meaning |
-  |--------|---------|
-  | `aegisai_webhook_dead_lettered_total` | Total dead-lettered events (all-time) |
-  | `aegisai_webhook_dlq_current` | Events currently sitting in the DLQ |
-  | `aegisai_webhook_dead_lettered_by_repo_total{repo=...}` | Dead-lettered events per repo |
-
-  Alert on `aegisai_webhook_dlq_current > 0` or a rising
-  `aegisai_webhook_dead_lettered_total` rate in your monitoring.
-
-### Manual Test Checklist
-
-1. **Test PR with vulnerabilities:**
-   ```bash
-   # Create a PR with SQL injection
-   echo 'query = f"SELECT * FROM users WHERE id={user_id}"' > test.py
-   git add test.py && git commit -m "test: vulnerable code"
-   git push origin HEAD:refs/heads/test-pr
-   ```
-
-2. **Verify review appears:**
-   - Wait 30-60 seconds
-   - Check the PR for AegisAI review comments
-
-3. **Test clean PR:**
-   - Open a PR with no security issues
-   - Verify "no issues found" summary
-
-4. **Verify cleanup:**
-   - Check `workspace/` directory is empty after job
-
-### Automated Tests
-
-```bash
-# Run all tests
+# Run the test suite
 pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=app --cov-report=term-missing
 ```
 
----
+> [!NOTE] The CI workflow enforces lint + test + security scans; a coverage threshold is enforced on the review-service code.
 
-## 🔧 LLM Gateway
+## 🔧 LLM gateway
 
-AegisAI supports multiple LLM providers:
+| Setting | Description |
+| --- | --- |
+| `AEGISAI_LLM_PROVIDER` | `anthropic` (default) or `openai` |
+| `AEGISAI_CLAUDE_KEY` / `AEGISAI_OPENAI_KEY` | API key for the chosen provider |
+| `AEGISAI_TIMEOUT` | Reasoning timeout per finding (default 10s) |
+| `AEGISAI_BLOCK_THRESHOLD` | Minimum severity to post a blocking comment |
 
-### Anthropic Claude (Default)
+> [!IMPORTANT] No LLM key is required for the deterministic fallback. Set `AEGISAI_LLM_PROVIDER=unknown` to run purely deterministic to verify the non-LLM path.
 
-```env
-LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-### OpenAI GPT
-
-```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-```
-
-### Test LLM Connectivity
+## 🐳 Docker deployment
 
 ```bash
-python scripts/test_llm_gateway.py
+# 1. Clone the repository
+git clone https://github.com/themanoj-025/AegisAI.git
+cd AegisAI
+
+# 2. Copy the environment template
+cp .env.example .env
+#   → Set AEGISAI_LLM_PROVIDER, the provider key, and Redis URL
+
+# 3. Start the stack
+docker compose up --build
 ```
 
----
+## 🛡️ Security features
 
-## 🐳 Docker Deployment
-
-### Development
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-```
-
-### Production
-
-```bash
-# Ensure secrets are in place
-mkdir -p secrets
-cp /path/to/github-app-private-key.pem secrets/
-
-# Start production stack
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-### Available Targets
-
-| Target | Image | Description |
-|--------|-------|-------------|
-| `api` | FastAPI server | Webhook receiver |
-| `worker` | RQ worker | Background processor |
-| `dev` | Development | Hot reload + tools |
-
----
-
-## 🛡️ Security Features
-
-- **HMAC-SHA256 Verification:** All webhooks are cryptographically verified
-- **Secret Redaction:** 4 pattern types detected before LLM processing
-- **Hallucination Guard:** Verifies findings reference actual code
-- **Security Headers:** CSP, X-Frame-Options, X-Content-Type-Options
-- **Timing-Safe Comparison:** Prevents timing attacks on signature verification
-
----
+- HMAC-SHA256 webhook signature verification (constant-time compare)
+- Redis-based task queue with DLQ for retries
+- Audit logging of every review comment posted
+- Rate limiting on the review webhook endpoint
+- Strict CSP headers (`default-src 'none'` — the Swagger UI intentionally renders blank; capture the PR-review flow instead)
 
 ## 🗺️ Roadmap
 
-- [x] Core webhook receiver
-- [x] LLM security agent
-- [x] GitHub review posting
-- [x] Docker deployment
-- [x] CI/CD pipeline
-- [ ] PostgreSQL storage for audit trail
-- [ ] Web dashboard for review history
-- [ ] Custom security rules engine
-- [ ] Slack/Teams notifications
-- [ ] Multi-language support
+> [!CAUTION] Checked items are built and verified. Unchecked items are tracked in the issue tracker.
 
----
+- [x] Line-anchored security findings on PR diffs
+- [x] Severity ranking (blocking / warning / nit)
+- [x] LLM + deterministic finding hybrid
+- [x] Redis RQ task queue + DLQ
+- [x] JSON report artifact
+- [ ] Public demo instance (tracked public issue)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing`)
-5. Open a Pull Request
-
----
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE).
 
----
-
-## 🙏 Acknowledgements
-
-- [Anthropic](https://www.anthropic.com/) - Claude API
-- [OpenAI](https://openai.com/) - GPT API
-- [FastAPI](https://fastapi.tiangolo.com/) - Web framework
-- [RQ](https://python-rq.org/) - Job queue
-- [Redis](https://redis.io/) - Data store
-
----
-
-## 📬 Support
-
-- 🐛 [Report Bug](https://github.com/themanoj-025/AegisAI/issues)
-- 💡 [Request Feature](https://github.com/themanoj-025/AegisAI/issues)
-- 📧 [Email](mailto:your-email@example.com)
-
-
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/themanoj-025">themanoj-025</a>
-</p>
-
-<p align="center">
-  If you find this project useful, please give it a ⭐ star!
-</p>
----
-
-## ⭐ Star History
-
-[![Last Commit](https://img.shields.io/github/last-commit/themanoj-025/AegisAI?style=flat-square)](https://github.com/themanoj-025/AegisAI)
-[![Contributors](https://img.shields.io/github/contributors/themanoj-025/AegisAI?style=flat-square)](https://github.com/themanoj-025/AegisAI/graphs/contributors)
-
-[![Star History Chart](https://api.star-history.com/svg?repos=themanoj-025/AegisAI&type=Date)](https://star-history.com/#AegisAI&Date)
+> [!IMPORTANT] The license in this README matches the `license` field in `pyproject.toml` and the contents of the `LICENSE` file. No conflicts were found.
