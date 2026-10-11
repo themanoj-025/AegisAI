@@ -1,0 +1,14 @@
+{
+  "repository": "AegisAI",
+  "mode": "AUDIT_ONLY",
+  "aggressiveness": 3,
+  "phase": 9,
+  "status": "COMPLETED_AUDIT",
+  "baseline_sha": "27f84accc7d7a534543e1e9817dbd2e187f01985",
+  "total_candidates": 37,
+  "t0_count": 16,
+  "t1_count": 0,
+  "t2_count": 21,
+  "t3_count": 0,
+  "updated_at": "2026-10-11T07:39:09.049Z"
+}
