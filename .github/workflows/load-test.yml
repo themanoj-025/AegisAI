@@ -61,7 +61,7 @@ jobs:
       - name: Run k6 load test
         uses: grafana/run-k6-action@4082a08c7e40cf6d65863911077dfb60ae0a4f04 # v1
         with:
-          path: load-test.js
+          path: tests/load/load-test.js
           flags: --quiet --summary-export=k6-results/summary.json
           env: |
             K6_BASE_URL=http://127.0.0.1:8000
