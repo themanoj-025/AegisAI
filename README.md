@@ -119,7 +119,7 @@ AegisAI/
 
 ## 📁 Project structure
 
-```
+```text
 AegisAI/
 ├── app/
 │   ├── api/                    # Webhook + review routes
