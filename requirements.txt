@@ -16,7 +16,7 @@ redis>=8.1.0
 # Prompt 4 dependencies
 anthropic>=1.13.0
 openai>=3.24.0
-tenacity>=9.1.4
+tenacity>=9.2.1
 
 # Observability
 prometheus-client>=0.26.0
