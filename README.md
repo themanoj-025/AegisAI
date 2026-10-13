@@ -23,7 +23,7 @@
 ## 📋 Table of Contents
 
 - [What it does](#what-it-does)
-- [📸 Screenshots](#-screenshots)
+- [📸 Screenshots](#screenshots)
 - [✨ Features](#-features)
 - [🏗️ Architecture](#️-architecture)
 - [🔍 What it detects](#-what-it-detects)
@@ -35,7 +35,7 @@
 - [🗺️ Roadmap](#️-roadmap)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
-- [📬 Support](#-support)
+- [📬 Support](#support)
 
 ---
 
@@ -196,3 +196,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 MIT License — see [LICENSE](LICENSE).
 
 > [!IMPORTANT] The license in this README matches the `license` field in `pyproject.toml` and the contents of the `LICENSE` file. No conflicts were found.
+
+## Support
+
+For questions, bug reports, or feature requests, please open an issue on [GitHub Issues](https://github.com/themanoj-025/AegisAI/issues).
