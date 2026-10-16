@@ -593,55 +593,55 @@ Containerized deployment via `docker-compose.prod.yml` running FastAPI gateway, 
 
 ## <a id="exam"></a>§EXAM — Cold-Reader Verification Exam (25 Questions)
 
-1. **Q: What is the primary architectural domain of AegisAI?**  
+1. **Q: What is the primary architectural domain of AegisAI?**
    *A:* Autonomous pull request security auditor combining Semgrep SAST with LLM reasoning. Reference: [§TLDR](#tldr).
-2. **Q: What cryptographic method authenticates incoming GitHub webhooks?**  
+2. **Q: What cryptographic method authenticates incoming GitHub webhooks?**
    *A:* HMAC-SHA256 signature verification. Reference: [`app/services/github_service.py`](app/services/github_service.py).
-3. **Q: What task queue handles asynchronous background PR reviews?**  
+3. **Q: What task queue handles asynchronous background PR reviews?**
    *A:* Redis RQ with Dead Letter Queue (DLQ) isolation. Reference: [`app/workers/queue.py`](app/workers/queue.py).
-4. **Q: What static analysis tool provides deterministic security checking?**  
+4. **Q: What static analysis tool provides deterministic security checking?**
    *A:* Semgrep SAST (`semgrep >= 1.65.0`). Reference: [`requirements.txt`](requirements.txt).
-5. **Q: What total lines of code exist in the AegisAI codebase?**  
+5. **Q: What total lines of code exist in the AegisAI codebase?**
    *A:* 12,793 lines of code. Reference: [§META](#meta).
-6. **Q: How many total tracked files exist in the repository?**  
+6. **Q: How many total tracked files exist in the repository?**
    *A:* 126 files. Reference: [§META](#meta).
-7. **Q: How many automated tests are collected across the test suite?**  
+7. **Q: How many automated tests are collected across the test suite?**
    *A:* 195 tests across 24 test files. Reference: [§TEST-CATALOG](#test-catalog).
-8. **Q: What git commit hash was verified for this documentation?**  
+8. **Q: What git commit hash was verified for this documentation?**
    *A:* `9e41436` (`9e4143635c39d7d41b71d658fcc6cc62d9e1ec55`). Reference: [§META](#meta).
-9. **Q: What git tree hash represents the verified repository state?**  
+9. **Q: What git tree hash represents the verified repository state?**
    *A:* `cec4d640a0533604f94743b1b4d976dbf6393ebe`. Reference: [§META](#meta).
-10. **Q: What open-source license governs the AegisAI repository?**  
+10. **Q: What open-source license governs the AegisAI repository?**
     *A:* MIT License. Reference: [`LICENSE`](LICENSE).
-11. **Q: How does AegisAI prevent secret leakage during review?**  
+11. **Q: How does AegisAI prevent secret leakage during review?**
     *A:* By scanning and masking API keys and private keys prior to LLM evaluation. Reference: [`app/services/redaction.py`](app/services/redaction.py).
-12. **Q: How does the system prevent duplicate comment spamming on GitHub?**  
+12. **Q: How does the system prevent duplicate comment spamming on GitHub?**
     *A:* By computing SHA-256 hashes of findings and comparing with posted records. Reference: [§WHAT](#what).
-13. **Q: What endpoint exposes health, queue depth, and worker connectivity?**  
+13. **Q: What endpoint exposes health, queue depth, and worker connectivity?**
     *A:* `/health`. Reference: [`app/health.py`](app/health.py).
-14. **Q: What Python runtime requirement is declared?**  
+14. **Q: What Python runtime requirement is declared?**
     *A:* Python >= 3.11. Reference: [`pyproject.toml`](pyproject.toml).
-15. **Q: What script tests the LLM gateway integration?**  
+15. **Q: What script tests the LLM gateway integration?**
     *A:* `scripts/test_llm_gateway.py`. Reference: [`scripts/test_llm_gateway.py`](scripts/test_llm_gateway.py).
-16. **Q: What linter is configured for code quality?**  
+16. **Q: What linter is configured for code quality?**
     *A:* Ruff. Reference: [`pyproject.toml`](pyproject.toml).
-17. **Q: What is the measured end-to-end review latency?**  
+17. **Q: What is the measured end-to-end review latency?**
     *A:* 28 seconds (benchmark target < 60 s). Reference: [§PERF](#perf).
-18. **Q: Where are environment variables defined and loaded?**  
+18. **Q: Where are environment variables defined and loaded?**
     *A:* In `.env` via `pydantic-settings`. Reference: [§ENV](#env).
-19. **Q: What happens if an unhandled exception occurs in a worker task?**  
+19. **Q: What happens if an unhandled exception occurs in a worker task?**
     *A:* The task is routed to the Dead Letter Queue (DLQ) without terminating the worker. Reference: [§RESILIENCE](#resilience).
-20. **Q: What command launches the Redis RQ review worker?**  
+20. **Q: What command launches the Redis RQ review worker?**
     *A:* `rq worker aegis_reviews --url redis://localhost:6379/0`. Reference: [§CLI](#cli).
-21. **Q: Does AegisAI permanently store customer repository source code?**  
+21. **Q: Does AegisAI permanently store customer repository source code?**
     *A:* No, diff patches are processed ephemerally in worker memory and discarded after publication. Reference: [§PRIVACY](#privacy).
-22. **Q: What authentication credentials does the GitHub integration use?**  
+22. **Q: What authentication credentials does the GitHub integration use?**
     *A:* GitHub App RSA private key and installation tokens. Reference: [§AUTH](#auth).
-23. **Q: What tool audits commits for hardcoded secrets?**  
+23. **Q: What tool audits commits for hardcoded secrets?**
     *A:* Gitleaks configured via `.gitleaks.toml`. Reference: [`.gitleaks.toml`](.gitleaks.toml).
-24. **Q: What framework powers the asynchronous API gateway?**  
+24. **Q: What framework powers the asynchronous API gateway?**
     *A:* FastAPI. Reference: [`app/main.py`](app/main.py).
-25. **Q: How many total tracked files are cataloged with 100% manifest coverage in Appendix A?**  
+25. **Q: How many total tracked files are cataloged with 100% manifest coverage in Appendix A?**
     *A:* All 126 tracked files. Reference: [§APP](#app).
 
 ---
