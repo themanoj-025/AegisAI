@@ -1,4 +1,4 @@
-# Rules — AegisAI: Coding Standards & AI-Agent Operating Rules
+# Rules — AegisAI: Coding Standards & Engineering Operating Rules
 
 | Field | Value |
 | --- | --- |
@@ -55,7 +55,7 @@ app/
 - Optional: pure formatting helpers.
 - See [Testing.md](../technical/Testing.md).
 
-## 5. AI Agent Operating Rules
+## 5. Engineering Operating Rules
 
 - Always read Tracker.md and ImplementationPlan.md before starting a task.
 - Never mark a task 🟢 Done in Tracker.md without tests passing.
