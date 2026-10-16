@@ -1,13 +1,180 @@
+# ==============================================================================
+# AegisAI - Security & Production .gitignore
+# ==============================================================================
 
-# ──────────────────────────────────────────────────────────────
-#  AI / LLM ARTIFACTS (prove this project uses NO LLM/AI)
-# ──────────────────────────────────────────────────────────────
-# AI-assistant tooling config (not part of the app)
+# ------------------------------------------------------------------------------
+# 1. SECRETS & ENVIRONMENT VARIABLES (CRITICAL)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.env
+.env.local
+.env.development
+.env.test
+.env.staging
+.env.production
+!.env.example
+!.env.template
+!.env.sample
+
+# Secret keys, credentials & private certificates
+*.pem
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pkcs12
+*.cer
+*.crt
+*.der
+*.id_rsa
+id_rsa*
+id_ed25519*
+id_ecdsa*
+id_dsa*
+
+# Cloud & service credentials
+credentials.json
+client_secret*.json
+service-account*.json
+service_account*.json
+serviceAccountKey*.json
+google-services.json
+GoogleService-Info.plist
+.aws/
+.azure/
+.gcp/
+gcloud/
+.act-secrets
+*.publishsettings
+
+# Authentication tokens & configs
+.netrc
+.pypirc
+.npmrc
+*token*.json
+token.pickle
+auth*.json
+
+# ------------------------------------------------------------------------------
+# 2. PYTHON RUNTIME, BUILDS & VIRTUAL ENVIRONMENTS
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Packaging & distribution
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ------------------------------------------------------------------------------
+# 3. TESTING, COVERAGE & QUALITY TOOLS
+# ------------------------------------------------------------------------------
+.cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.tox/
+
+# ------------------------------------------------------------------------------
+# 4. LOGS, DATABASES & RUNTIME STORAGE
+# ------------------------------------------------------------------------------
+logs/
+*.log
+*.log.*
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.dump
+*.stackdump
+
+# ------------------------------------------------------------------------------
+# 5. OS ARTIFACTS & TEMPORARY FILES
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------------------------
+# 6. IDE, EDITORS & LOCAL AUDIT WORKSPACES
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.vscode/*.local.*
+.vscode/mcp.json
+*.sublime-project
+*.sublime-workspace
+
+# Local audit / scratch state
+.freebuff/
+.restructure-audit/
+.tmp-audit/
+
+# ------------------------------------------------------------------------------
+# 7. AI / LLM ARTIFACTS & LOCAL TOOLING (PROJECT COMPLIANCE)
+# ------------------------------------------------------------------------------
 AGENTS.md
 AGENTS_FIX.md
 .cursorrules
 .gemini/
-.act-secrets
 ai-provenance.json
 AI_DISCLOSURE.md
 ai-disclosure-check.yml
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.cursor/
+.windsurf/
+.agents/
