@@ -2,7 +2,7 @@ annotated-doc==0.0.5
     # via fastapi
 annotated-types==0.8.0
     # via pydantic
-anthropic==1.13.0
+anthropic==2.3.0
     # via -r requirements.txt
 anyio==4.14.2
     # via
@@ -36,7 +36,7 @@ deprecated==1.3.1
     # via limits
 docstring-parser==0.18.0
     # via anthropic
-fastapi==0.143.0
+fastapi==0.162.0
     # via -r requirements.txt
 googleapis-common-protos==1.75.3
     # via opentelemetry-exporter-otlp-proto-grpc
@@ -72,11 +72,12 @@ jiter==0.16.0
     #   openai
 limits==5.8.0
     # via slowapi
-openai==3.31.0
+openai==3.40.0
     # via -r requirements.txt
 opentelemetry-api==1.45.1
     # via
     #   -r requirements.txt
+    #   anthropic
     #   fastapi
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-instrumentation
@@ -138,7 +139,7 @@ pydantic==2.13.4
     #   pydantic-settings
 pydantic-core==2.46.4
     # via pydantic
-pydantic-settings==2.6.0
+pydantic-settings==2.16.2
     # via -r requirements.txt
 pyjwt==2.15.1
     # via -r requirements.txt
@@ -188,12 +189,14 @@ typing-extensions==4.16.0
     #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
+    #   pydantic-settings
     #   starlette
     #   typing-inspection
 typing-inspection==0.4.4
     # via
     #   fastapi
     #   pydantic
+    #   pydantic-settings
 uvicorn==0.54.0
     # via -r requirements.txt
 uvloop==0.22.1

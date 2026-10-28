@@ -47,7 +47,7 @@ def test_readiness_503_when_redis_down(client: TestClient) -> None:
     body = resp.json()
     assert body["status"] == "not_ready"
     assert body["checks"][0]["status"] == "down"
-    assert "redis down" in body["checks"][0]["error"]
+    assert "ConnectionError" in body["checks"][0]["error"]
 
 
 def test_canonical_health_module_synced(client: TestClient) -> None:
