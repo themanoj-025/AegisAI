@@ -37,7 +37,7 @@ AegisAI/
 ├── Makefile                     # compose convenience targets
 ├── pyproject.toml               # black / isort / pytest config
 ├── requirements.txt             # pip dependencies
-├── README.md  PROJECT_OVERVIEW.md  PROJECT_ANALYSIS.md  
+├── README.md  PROJECT_OVERVIEW.md  PROJECT_ANALYSIS.md
 └── .gitignore  .dockerignore  .vscode/
 ```
 
