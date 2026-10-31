@@ -37,7 +37,7 @@ AegisAI/
 ├── Makefile                     # compose convenience targets
 ├── pyproject.toml               # black / isort / pytest config
 ├── requirements.txt             # pip dependencies
-├── README.md  PROJECT_OVERVIEW.md  PROJECT_ANALYSIS.md  AGENTS.md
+├── README.md  PROJECT_OVERVIEW.md  PROJECT_ANALYSIS.md  
 └── .gitignore  .dockerignore  .vscode/
 ```
 
@@ -90,7 +90,7 @@ file breakdown).
 | `worker.py`, `app/main.py` | ✔ entry points |
 | `Dockerfile`, `docker-compose*.yml` | ✔ container tooling |
 | `Makefile`, `pyproject.toml`, `requirements.txt` | ✔ standard metadata |
-| `README.md`, `PROJECT_OVERVIEW.md`, `PROJECT_ANALYSIS.md`, `AGENTS.md` | ✔ metadata / docs |
+| `README.md`, `PROJECT_OVERVIEW.md`, `PROJECT_ANALYSIS.md` | ✔ metadata / docs |
 | `app/`, `docs/`, `scripts/`, `.github/`, `.vscode/` | ✔ top-level folders |
 | `.gitignore`, `.dockerignore` | ✔ VCS / build metadata |
 
