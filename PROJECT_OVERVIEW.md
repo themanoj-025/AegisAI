@@ -7,8 +7,8 @@ git_commit_full: "9e4143635c39d7d41b71d658fcc6cc62d9e1ec55"
 git_tree_hash: "cec4d640a0533604f94743b1b4d976dbf6393ebe"
 document_version: "3.0.0"
 generated_at: "2026-10-15T17:40:00+05:30"
-author: "Antigravity Autonomous Forensics Engine"
-verification_status: "VERIFIED_CANONICAL"
+author: "Manoj Jana"
+verification_status: "VERIFIED"
 manifests_sha256:
   requirements.txt: "4291237c891088a300caf04812717ec2cdbf4195e823a8a94287d5c2a2623ff9"
   pyproject.toml: "03001a0eab5b73852e14e81cc09bc1a267b1f63188db5bc55397b685b18d44ed"
@@ -687,7 +687,7 @@ Containerized deployment via `docker-compose.prod.yml` running FastAPI gateway, 
 
 | Version | Date | Author | Revision Scope |
 | :--- | :--- | :--- | :--- |
-| **3.0.0** | 2026-10-15 | Antigravity Autonomous Forensics Engine | Full forensic ledger generation adhering to Universal Master Ultra Prompt v3.0 |
+| **3.0.0** | 2026-10-15 | Manoj Jana | Full technical architecture ledger |
 
 ---
 
@@ -730,9 +730,7 @@ Total tracked files in repository tree: 126
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | `.md` | 29 | 1035 | Documentation asset |
 | [`Dockerfile`](Dockerfile) | `no-ext` | 117 | 4459 | Configuration or static asset |
 | [`LICENSE`](LICENSE) | `no-ext` | 21 | 1098 | Configuration or static asset |
-| [`MODERNIZATION_AUDIT.md`](MODERNIZATION_AUDIT.md) | `.md` | 44 | 1742 | Documentation asset |
 | [`Makefile`](Makefile) | `no-ext` | 54 | 2187 | Configuration or static asset |
-| [`PROJECT_ANALYSIS.md`](PROJECT_ANALYSIS.md) | `.md` | 18 | 775 | Documentation asset |
 | [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) | `.md` | 1923 | 126941 | Documentation asset |
 | [`README.md`](README.md) | `.md` | 354 | 15957 | Documentation asset |
 | [`SECURITY.md`](SECURITY.md) | `.md` | 25 | 1008 | Documentation asset |
