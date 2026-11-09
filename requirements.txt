@@ -14,7 +14,7 @@ rq>=3.0.0,<4.0
 redis>=8.1.0
 
 # Prompt 4 dependencies
-anthropic>=2.3.0
+anthropic>=2.6.0
 openai>=3.37.0
 tenacity>=9.2.1
 
