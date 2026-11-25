@@ -120,7 +120,7 @@ erDiagram
 ```json
 {
   "job_id": "job_7f3a",
-  "repo_url": "https://github.com/acme/app",
+  "repo_url": "https://example.com/acme/app",
   "pr_number": 42,
   "head_sha": "a1b2c3d4",
   "state": "done"

@@ -12,10 +12,11 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, Security
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, StrictInt
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -154,7 +155,11 @@ app.add_middleware(
 )
 
 # ── Rate Limiting ─────────────────────────────────────────────────────
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["60/minute"],
+    enabled=settings.rate_limit_enabled,
+)
 app.state.limiter = limiter
 app.add_exception_handler(
     RateLimitExceeded,
@@ -218,7 +223,13 @@ async def health_check() -> dict[str, Any]:
     return {"status": "ok"}
 
 
-@app.post("/webhooks/github")
+@app.post(
+    "/webhooks/github",
+    responses={
+        401: {"description": "Invalid or missing signature"},
+        503: {"description": "Queue unavailable"},
+    },
+)
 async def github_webhook(request: Request) -> Response:
     """Receive, verify, and acknowledge GitHub webhook events.
 
@@ -349,44 +360,72 @@ async def github_webhook(request: Request) -> Response:
 # Requires AEGIS_API_KEY when configured (see verify_api_key).
 
 
-@v1_router.get("/webhooks/dlq", dependencies=[Depends(verify_api_key)])
-async def list_dead_letters(limit: int = 100) -> dict[str, Any]:
+class ReplayRequest(BaseModel):
+    """Optional request body for replaying specific dead-letter queue indexes."""
+
+    indexes: list[StrictInt] | None = None
+
+
+_AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
+    401: {"description": "Missing Authorization header"},
+    403: {"description": "Invalid API key"},
+}
+
+
+@v1_router.get(
+    "/webhooks/dlq",
+    dependencies=[Depends(verify_api_key)],
+    responses=_AUTH_RESPONSES,
+)
+async def list_dead_letters(limit: int = Query(100, ge=1, le=1000)) -> dict[str, Any]:
     """List dead-lettered webhook events for inspection."""
     items = list_dlq(limit=limit)
     return {"count": len(items), "items": items}
 
 
-@v1_router.post("/webhooks/dlq/replay", dependencies=[Depends(verify_api_key)])
-async def replay_dead_letters(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+@v1_router.post(
+    "/webhooks/dlq/replay",
+    dependencies=[Depends(verify_api_key)],
+    responses={**_AUTH_RESPONSES, 400: {"description": "Malformed JSON body"}},
+)
+async def replay_dead_letters(payload: ReplayRequest | None = None) -> dict[str, Any]:
     """Re-enqueue dead-lettered webhook events.
 
     Optional body: {"indexes": [0, 2]} to replay specific entries (positions
     from GET /api/v1/webhooks/dlq). Omitting the body replays all.
     """
-    indexes = payload.get("indexes") if payload else None
+    indexes = payload.indexes if payload else None
     replayed = replay_dlq(indexes=indexes)
     if _PROM_AVAILABLE:
         WEBHOOK_REPLAYED.inc(replayed)
     return {"replayed": replayed}
 
 
-@v1_router.delete("/webhooks/dlq", dependencies=[Depends(verify_api_key)])
+@v1_router.delete(
+    "/webhooks/dlq",
+    dependencies=[Depends(verify_api_key)],
+    responses=_AUTH_RESPONSES,
+)
 async def clear_dead_letters() -> dict[str, Any]:
     """Remove all dead-lettered webhook events (irreversible)."""
     return {"removed": clear_dlq()}
 
 
-@v1_router.get("/webhooks/queue/stats", dependencies=[Depends(verify_api_key)])
+@v1_router.get(
+    "/webhooks/queue/stats",
+    dependencies=[Depends(verify_api_key)],
+    responses=_AUTH_RESPONSES,
+)
 async def queue_stats() -> dict[str, Any]:
     """Queue health: retry backlog, DLQ size, review queue depth/failures."""
     return get_retry_stats()
 
 
-@app.get("/metrics")
-async def metrics():
+@app.get("/metrics", response_class=PlainTextResponse)
+async def metrics() -> Response:
     """Prometheus metrics endpoint."""
     if not _PROM_AVAILABLE:
-        return {"status": "prometheus_client not installed"}
+        return Response(content="prometheus_client not installed", media_type="text/plain")
     try:
         dlq = get_dlq_metrics()
         DLQ_MOVES_TOTAL.set(dlq["dead_letter_moves_total"])

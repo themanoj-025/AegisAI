@@ -32,8 +32,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://user:pass@localhost:5432/aegisai"
     workspace_dir: str = "./workspace"
 
-    # API authentication
+    # API authentication & rate limiting
     aegis_api_key: str = ""
+    rate_limit_enabled: bool = True
 
     # CORS — comma-separated list of allowed origins (AEGIS_CORS_ORIGINS)
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"

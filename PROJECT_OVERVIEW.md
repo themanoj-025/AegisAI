@@ -116,12 +116,12 @@ AegisAI resolves these challenges through hybrid inspection: deterministic Semgr
 
 | Capability Dimension | Architectural Implementation | Forensic Code Anchor |
 | :--- | :--- | :--- |
-| **Hybrid Security Audit** | Blends deterministic Semgrep SAST rule execution with context-aware LLM agents | [`app/services/semgrep_service.py`](app/services/semgrep_service.py), [`app/agents/`](app/agents/) |
-| **HMAC Webhook Verification** | Validates incoming GitHub webhook payloads against `GITHUB_WEBHOOK_SECRET` | [`app/services/github_service.py`](app/services/github_service.py) |
-| **Asynchronous Worker Queue** | Redis RQ task queue with Dead Letter Queue (DLQ) isolation and exponential backoff | [`app/workers/queue.py`](app/workers/queue.py) |
-| **Inline GitHub Reviewer** | Formats and posts GitHub PR review comments targeted to specific diff line anchors | [`app/services/comment_poster.py`](app/services/comment_poster.py) |
-| **Automated Secret Redaction**| Scans and masks API keys, JWT tokens, and private keys prior to LLM transmission | [`app/services/redaction.py`](app/services/redaction.py) |
-| **Deduplication Checksum** | Computes SHA-256 hashes of findings to prevent duplicate comment spamming | [`app/services/dedup.py`](app/services/dedup.py) |
+| **Hybrid Security Audit** | Blends deterministic Semgrep SAST rule execution with context-aware LLM agents | [`app/agents/security_agent.py`](app/agents/security_agent.py), [`app/agents/`](app/agents/) |
+| **HMAC Webhook Verification** | Validates incoming GitHub webhook payloads against `GITHUB_WEBHOOK_SECRET` | [`app/services/github_auth.py`](app/services/github_auth.py) |
+| **Asynchronous Worker Queue** | Redis RQ task queue with Dead Letter Queue (DLQ) isolation and exponential backoff | [`app/services/queue.py`](app/services/queue.py) |
+| **Inline GitHub Reviewer** | Formats and posts GitHub PR review comments targeted to specific diff line anchors | [`app/services/github_reviewer.py`](app/services/github_reviewer.py) |
+| **Automated Secret Redaction**| Scans and masks API keys, JWT tokens, and private keys prior to LLM transmission | [`app/services/secrets_redactor.py`](app/services/secrets_redactor.py) |
+| **Deduplication Checksum** | Computes SHA-256 hashes of findings to prevent duplicate comment spamming | [`app/services/queue.py`](app/services/queue.py) |
 | **Health & Telemetry API** | Exposes Prometheus metrics and structured health probe endpoints | [`app/health.py`](app/health.py) |
 
 ---
@@ -348,11 +348,11 @@ AegisAI/
 | Module Path | Functional Layer | Architectural Responsibility |
 | :--- | :--- | :--- |
 | [`app/main.py`](app/main.py) | API Gateway | Initializes FastAPI, mounts routes, and registers HMAC middleware |
-| [`app/services/semgrep_service.py`](app/services/semgrep_service.py) | SAST Engine | Executes Semgrep rules against altered PR files |
+| [`app/services/diff_extractor.py`](app/services/diff_extractor.py) | Diff Parser | Extracts and filters unified PR diffs |
 | [`app/agents/security_agent.py`](app/agents/security_agent.py) | Agent Core | Evaluates vulnerabilities and drafts code remediations |
-| [`app/workers/queue.py`](app/workers/queue.py) | Job Queue | Redis RQ queue integration with dead-letter queue handlers |
-| [`app/services/redaction.py`](app/services/redaction.py) | Privacy & Security | Sanitizes diff text to prevent credential leaks |
-| [`app/services/comment_poster.py`](app/services/comment_poster.py) | GitHub Integration | Publishes structured review comments with exact line anchors |
+| [`app/services/queue.py`](app/services/queue.py) | Job Queue | Redis RQ queue integration with dead-letter queue handlers |
+| [`app/services/secrets_redactor.py`](app/services/secrets_redactor.py) | Privacy & Security | Sanitizes diff text to prevent credential leaks |
+| [`app/services/github_reviewer.py`](app/services/github_reviewer.py) | GitHub Integration | Publishes structured review comments with exact line anchors |
 | [`app/health.py`](app/health.py) | Observability | Reports queue depth, worker health, and Redis connectivity |
 
 ---
@@ -596,9 +596,9 @@ Containerized deployment via `docker-compose.prod.yml` running FastAPI gateway, 
 1. **Q: What is the primary architectural domain of AegisAI?**
    *A:* Autonomous pull request security auditor combining Semgrep SAST with LLM reasoning. Reference: [§TLDR](#tldr).
 2. **Q: What cryptographic method authenticates incoming GitHub webhooks?**
-   *A:* HMAC-SHA256 signature verification. Reference: [`app/services/github_service.py`](app/services/github_service.py).
+   *A:* HMAC-SHA256 signature verification. Reference: [`app/main.py`](app/main.py).
 3. **Q: What task queue handles asynchronous background PR reviews?**
-   *A:* Redis RQ with Dead Letter Queue (DLQ) isolation. Reference: [`app/workers/queue.py`](app/workers/queue.py).
+   *A:* Redis RQ with Dead Letter Queue (DLQ) isolation. Reference: [`app/services/queue.py`](app/services/queue.py).
 4. **Q: What static analysis tool provides deterministic security checking?**
    *A:* Semgrep SAST (`semgrep >= 1.65.0`). Reference: [`requirements.txt`](requirements.txt).
 5. **Q: What total lines of code exist in the AegisAI codebase?**
@@ -614,7 +614,7 @@ Containerized deployment via `docker-compose.prod.yml` running FastAPI gateway, 
 10. **Q: What open-source license governs the AegisAI repository?**
     *A:* MIT License. Reference: [`LICENSE`](LICENSE).
 11. **Q: How does AegisAI prevent secret leakage during review?**
-    *A:* By scanning and masking API keys and private keys prior to LLM evaluation. Reference: [`app/services/redaction.py`](app/services/redaction.py).
+    *A:* By scanning and masking API keys and private keys prior to LLM evaluation. Reference: [`app/services/secrets_redactor.py`](app/services/secrets_redactor.py).
 12. **Q: How does the system prevent duplicate comment spamming on GitHub?**
     *A:* By computing SHA-256 hashes of findings and comparing with posted records. Reference: [§WHAT](#what).
 13. **Q: What endpoint exposes health, queue depth, and worker connectivity?**
@@ -762,16 +762,9 @@ Total tracked files in repository tree: 126
 | [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) | `.md` | 3 | 74 | Technical design and documentation asset |
 | [`docs/README.md`](docs/README.md) | `.md` | 64 | 3208 | Technical design and documentation asset |
 | [`docs/architecture.md`](docs/architecture.md) | `.md` | 118 | 7501 | Technical design and documentation asset |
-| [`docs/audit/cleanup-audit-2026-08-13.md`](docs/audit/cleanup-audit-2026-08-13.md) | `.md` | 54 | 3206 | Technical design and documentation asset |
-| [`docs/audit/cleanup-audit-2026-08-15-code.md`](docs/audit/cleanup-audit-2026-08-15-code.md) | `.md` | 50 | 2731 | Technical design and documentation asset |
-| [`docs/audit/cleanup-audit-2026-08-15.md`](docs/audit/cleanup-audit-2026-08-15.md) | `.md` | 81 | 2943 | Technical design and documentation asset |
-| [`docs/audit/dependabot-inventory-2026-08-16.md`](docs/audit/dependabot-inventory-2026-08-16.md) | `.md` | 234 | 20262 | Technical design and documentation asset |
 | [`docs/design/AppFlow.md`](docs/design/AppFlow.md) | `.md` | 100 | 3605 | Technical design and documentation asset |
 | [`docs/design/Design.md`](docs/design/Design.md) | `.md` | 100 | 3703 | Technical design and documentation asset |
 | [`docs/folder_structure.md`](docs/folder_structure.md) | `.md` | 108 | 5934 | Technical design and documentation asset |
-| [`docs/migration/file_move_ledger.md`](docs/migration/file_move_ledger.md) | `.md` | 49 | 2732 | Technical design and documentation asset |
-| [`docs/migration/migration_summary.md`](docs/migration/migration_summary.md) | `.md` | 122 | 7432 | Technical design and documentation asset |
-| [`docs/migration/old_tree_to_new_tree.md`](docs/migration/old_tree_to_new_tree.md) | `.md` | 66 | 3281 | Technical design and documentation asset |
 | [`docs/module_dependency.md`](docs/module_dependency.md) | `.md` | 71 | 5122 | Technical design and documentation asset |
 | [`docs/package_overview.md`](docs/package_overview.md) | `.md` | 74 | 4069 | Technical design and documentation asset |
 | [`docs/product/PRD.md`](docs/product/PRD.md) | `.md` | 134 | 7848 | Technical design and documentation asset |

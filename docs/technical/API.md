@@ -29,7 +29,7 @@
 {
   "action": "opened",
   "number": 42,
-  "repository": { "full_name": "acme/app", "clone_url": "https://github.com/acme/app.git" },
+  "repository": { "full_name": "acme/app", "clone_url": "https://example.com/acme/app.git" },
   "pull_request": { "head": { "sha": "a1b2c3d4" } }
 }
 ```
