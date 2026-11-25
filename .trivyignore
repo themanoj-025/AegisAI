@@ -8,3 +8,6 @@ CVE-2025-47273
 CVE-2026-114613
 # CVE-2026-112940: filelock arbitrary file overwrite via database reopening in base image
 CVE-2026-112940
+
+# CVE-2026-124851: libzstd1 information disclosure in base image
+CVE-2026-124851
